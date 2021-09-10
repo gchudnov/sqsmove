@@ -1,6 +1,6 @@
 # SQSMove
 
-Moves messages between SQS queues with the desired parallelism, preserving attributes.
+Moves messages between AWS SQS queues with the desired parallelism, preserving attributes.
 
 ## Usage
 
@@ -31,7 +31,7 @@ sqsmove -s A -d B
 Move messages from A to B with parallelism 1:
 
 ```bash
-sqsmove -s A -d B -n 1
+sqsmove -s A -d B -p 1
 ```
 
 ## Build
