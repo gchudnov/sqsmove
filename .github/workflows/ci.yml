@@ -1,0 +1,99 @@
+name: Build
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+jobs:
+  build:
+    name: Test and Assembly
+    runs-on: ubuntu-latest
+    container:
+      image: hseeberger/scala-sbt:11.0.12_1.5.5_2.13.6
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache SBT
+        uses: actions/cache@v1
+        with:
+          path: ~/.sbt
+          key: ${{ runner.os }}-sbt-cache-${{ hashFiles('*.sbt') }}-${{ hashFiles('project/*') }}
+      - name: Cache SBT Coursier
+        uses: actions/cache@v1
+        with:
+          path: ~/.cache/coursier/v1
+          key: ${{ runner.os }}-sbt-coursier-cache-${{ hashFiles('*.sbt') }}-${{ hashFiles('project/*') }}
+      - name: Run tests
+        run: sbt test
+      - name: Assembly JAR
+        run: sbt cli/assembly
+      - uses: actions/upload-artifact@v2
+        with:
+          path: target/sqsmove.jar
+      - uses: actions/upload-artifact@v2
+        with:
+          path: res/graalvm/
+
+  release_jar:
+    name: Release Jar
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          path: ./
+      - name: Release artifact
+        uses: softprops/action-gh-release@v1
+        with:
+          files: 'artifact/sqsmove.jar'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release_nix:
+    name: Build native images
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-10.15]
+    steps:
+      - uses: DeLaGuardo/setup-graalvm@4.0
+        with:
+          graalvm: '21.0.0.2'
+          java: 'java11'
+
+      - name: Install GraalVM's native-image extension
+        run: gu install native-image
+
+      - uses: actions/download-artifact@v2
+        with:
+          path: ./
+
+      - name: Create native image
+        run: |
+          native-image \
+            --verbose \
+            --initialize-at-build-time \
+            --initialize-at-run-time="$(cat ./artifact/init-run-time.txt | tr '\n' ',' | sed 's/,$//')" \
+            --no-fallback \
+            --allow-incomplete-classpath \
+            --enable-http \
+            --enable-https \
+            -H:+ReportUnsupportedElementsAtRuntime \
+            -H:+ReportExceptionStackTraces \
+            -jar "./artifact/sqsmove.jar" "sqsmove"
+
+      - name: Create tarball
+        run: tar -zcvf "sqsmove-${{ matrix.os }}.tar.gz" sqsmove
+
+      - name: Release artifact
+        uses: softprops/action-gh-release@v1
+        with:
+          files: 'sqsmove-${{ matrix.os }}.tar.gz'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
