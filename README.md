@@ -2,6 +2,8 @@
 
 <img src="res/img/logo192.png" width="192px" height="192px" align="right" />
 
+[![Build](https://github.com/gchudnov/sqsmove/actions/workflows/ci.yml/badge.svg)](https://github.com/gchudnov/sqsmove/actions/workflows/ci.yml)
+
 Moves messages between AWS SQS queues with the desired parallelism, preserving attributes.
 
 <br clear="right" /><!-- Turn off the wrapping for the logo image. -->
