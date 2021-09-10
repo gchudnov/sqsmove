@@ -54,4 +54,7 @@ will be picked up automatically.
 
 # run
 ./sqsmove -s queue1 -d queue2
+
+# copy
+cp ./sqsmove /usr/local/bin/
 ```
