@@ -49,7 +49,7 @@ object SqsConfig {
         .valueName("<value>")
         .validate(n => if(n >= 0) Right(()) else Left(s"${ArgParallelismLong} cannot be negative"))
         .action((x, c) => c.copy(n = x))
-        .text(s"fixed parallelism (desired: ${SqsConfig.empty.n})"),
+        .text(s"parallelism (default: ${SqsConfig.empty.n})"),
       opt[Unit](ArgHelpShort, ArgHelpLong)
         .optional()
         .text("prints this usage text")
