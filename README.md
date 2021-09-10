@@ -1,8 +1,14 @@
 # SQSMove
 
+<img src="res/img/logo192.png" width="192px" height="192px" align="right" />
+
 Moves messages between AWS SQS queues with the desired parallelism, preserving attributes.
 
+<br clear="right" /><!-- Turn off the wrapping for the logo image. -->
+
 ## Usage
+
+Download the binary executable or build it.
 
 ```bash
 $ sqsmove --help
