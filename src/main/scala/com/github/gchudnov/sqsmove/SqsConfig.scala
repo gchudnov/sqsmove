@@ -23,7 +23,7 @@ object SqsConfig {
   private val ArgSourceLong       = "src-queue"
   private val ArgDestinationShort = 'd'
   private val ArgDestinationLong  = "dst-queue"
-  private val ArgParallelismShort = 'n'
+  private val ArgParallelismShort = 'p'
   private val ArgParallelismLong  = "parallelism"
   private val ArgVerboseShort     = 'v'
   private val ArgVerboseLong      = "verbose"

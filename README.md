@@ -14,7 +14,7 @@ Usage: sqsmove [options]
 
   -s, --src-queue <name>   source queue name
   -d, --dst-queue <name>   destination queue name
-  -n, --parallelism <value>
+  -p, --parallelism <value>
                            desired parallelism (default: 16)
   -h, --help               prints this usage text
   -v, --verbose            verbose output
