@@ -33,8 +33,8 @@ package object sqs {
   }
 
   def getQueueUrl(name: String): ZIO[Sqs, Throwable, String] =
-    ZIO.accessM(_.get.getQueueUrl(name))
+    ZIO.accessZIO(_.get.getQueueUrl(name))
 
   def copy(srcQueueUrl: String, dstQueueUrl: String): ZIO[Sqs, Throwable, Unit] =
-    ZIO.accessM(_.get.copy(srcQueueUrl, dstQueueUrl))
+    ZIO.accessZIO(_.get.copy(srcQueueUrl, dstQueueUrl))
 }

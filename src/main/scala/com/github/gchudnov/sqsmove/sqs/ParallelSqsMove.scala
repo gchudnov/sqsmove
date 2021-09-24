@@ -15,10 +15,10 @@ final class ParallelSqsMove(maxConcurrency: Int, parallelism: Int, logger: Logge
   override def copy(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZStream
       .repeat(makeReceiveRequest(srcQueueUrl))
-      .mapMPar(parallelism)(r => receiveBatch(r))
+      .mapZIOPar(parallelism)(r => receiveBatch(r))
       .filter(_.nonEmpty)
-      .mapMPar(parallelism)(b => sendBatch(dstQueueUrl, b))
+      .mapZIOPar(parallelism)(b => sendBatch(dstQueueUrl, b))
       .filter(_.nonEmpty)
-      .mapMPar(parallelism)(b => (deleteBatch(srcQueueUrl, b) @@ aspCountMessages).unit)
+      .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b) @@ aspCountMessages).unit)
       .runDrain
 }

@@ -66,8 +66,8 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
       (retains, removes) = ps.splitAt(n)
       _                 <- psRef.set(retains)
       _                 <- logger.debug(s"[$name] current: ${ps.size}; to_create: ${n - retains.size}; to_delete: ${removes.size};")
-      _                 <- ZIO.foreach_(removes)(it => logger.debug(s"[$name] delete") *> it.fail(None))
-      _ <- ZIO.foreach_(List.fill(n - retains.size)(())) { _ =>
+      _                 <- ZIO.foreachDiscard(removes)(it => logger.debug(s"[$name] delete") *> it.fail(None))
+      _ <- ZIO.foreachDiscard(List.fill(n - retains.size)(())) { _ =>
              newWorker
            }
     } yield ()
@@ -81,14 +81,14 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
       _ <- logger.debug(s"[$name] create")
       p <- Promise.make[Option[Throwable], Unit] // promise to cancel
       _ <- psRef.update(xs => p :: xs)
-      s1 = ZStream.fromEffectOption(p.await)
+      s1 = ZStream.fromZIOOption(p.await)
       s2 = ZStream
              .fromQueue(inQueue)
              .groupedWithin(autoBatchSize, autoBatchWaitTime)
              .filter(_.nonEmpty)
-             .mapM(b => runEffect(b))
+             .mapZIO(b => runEffect(b))
              .tap(b => logger.debug(s"[$name] produce size: ${b.size}"))
-             .mapM(b => outQueue.offerAll(b).unit)
+             .mapZIO(b => outQueue.offerAll(b).unit)
       s3 = s1.mergeTerminateEither(s2)
       f <- (s3.runDrain *> logger.debug(s"[$name] done")).fork
     } yield f
@@ -105,7 +105,7 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
              .flatMap(b => ZIO.when(b.nonEmpty)(outQueue.offerAll(b)))
              .forever
              .race(
-               p.await.foldM(
+               p.await.foldZIO(
                  {
                    case Some(t) => ZIO.fail(t)
                    case None    => ZIO.unit
