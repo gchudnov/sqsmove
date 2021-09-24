@@ -3,7 +3,6 @@ package com.github.gchudnov.sqsmove.sqs
 import com.github.gchudnov.sqsmove.sqs.AwsSqs.makeReceiveRequest
 import com.github.gchudnov.sqsmove.sqs.BasicSqsMove.aspCountMessages
 import zio.ZIO
-import zio.blocking.Blocking
 import zio.logging.Logger
 import zio.zmx.metrics.MetricsSyntax
 
@@ -12,7 +11,7 @@ import zio.zmx.metrics.MetricsSyntax
  */
 final class SerialSqsMove(maxConcurrency: Int, logger: Logger[String]) extends BasicSqsMove(maxConcurrency, logger) {
 
-  override def copy(srcQueueUrl: String, dstQueueUrl: String): ZIO[Blocking, Throwable, Unit] =
+  override def copy(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZIO
       .succeed(makeReceiveRequest(srcQueueUrl))
       .flatMap(r => receiveBatch(r))

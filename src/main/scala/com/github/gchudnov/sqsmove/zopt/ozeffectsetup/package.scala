@@ -1,13 +1,8 @@
 package com.github.gchudnov.sqsmove.zopt
 
 import scopt.OEffect
-import scopt.OEffect._
-import zio.Has
-import zio.RIO
-import zio.Task
-import zio.ZIO
-import zio.ZLayer
-import zio.console.Console
+import scopt.OEffect.*
+import zio.{ Console, Has, RIO, Task, ZIO, ZLayer }
 
 package object ozeffectsetup {
   type OZEffectSetup = Has[OZEffectSetup.Service]
@@ -22,45 +17,46 @@ package object ozeffectsetup {
     }
 
     val any: ZLayer[OZEffectSetup, Nothing, OZEffectSetup] =
-      ZLayer.requires[OZEffectSetup]
+      ZLayer.environment[OZEffectSetup]
 
-    val stdio: ZLayer[Console, Throwable, OZEffectSetup] = ZLayer.fromService { console =>
-      new Service {
-        override def displayToOut(msg: String): Task[Unit] =
-          console.putStrLn(msg)
+    val stdio: ZLayer[Has[Console], Nothing, OZEffectSetup] = (for {
+      console <- ZIO.service[Console]
+      service = new Service {
+                  override def displayToOut(msg: String): Task[Unit] =
+                    console.printLine(msg)
 
-        override def displayToErr(msg: String): Task[Unit] =
-          console.putStrLnErr(msg)
+                  override def displayToErr(msg: String): Task[Unit] =
+                    console.printLineError(msg)
 
-        override def reportError(msg: String): Task[Unit] =
-          displayToErr("Error: " + msg)
+                  override def reportError(msg: String): Task[Unit] =
+                    displayToErr("Error: " + msg)
 
-        override def reportWarning(msg: String): Task[Unit] =
-          displayToErr("Warning: " + msg)
+                  override def reportWarning(msg: String): Task[Unit] =
+                    displayToErr("Warning: " + msg)
 
-        override def terminate(exitState: Either[String, Unit]): Task[Unit] =
-          exitState match {
-            case Left(_)  => ZIO.fail(new FailureExitException())
-            case Right(_) => ZIO.fail(new SuccessExitException())
-          }
-      }
-    }
+                  override def terminate(exitState: Either[String, Unit]): Task[Unit] =
+                    exitState match {
+                      case Left(_)  => ZIO.fail(new FailureExitException())
+                      case Right(_) => ZIO.fail(new SuccessExitException())
+                    }
+                }
+    } yield service).toLayer
   }
 
   def displayToOut(msg: String): ZIO[OZEffectSetup, Throwable, Unit] =
-    ZIO.accessM(_.get.displayToOut(msg))
+    ZIO.accessZIO(_.get.displayToOut(msg))
 
   def displayToErr(msg: String): ZIO[OZEffectSetup, Throwable, Unit] =
-    ZIO.accessM(_.get.displayToErr(msg))
+    ZIO.accessZIO(_.get.displayToErr(msg))
 
   def reportError(msg: String): ZIO[OZEffectSetup, Throwable, Unit] =
-    ZIO.accessM(_.get.reportError(msg))
+    ZIO.accessZIO(_.get.reportError(msg))
 
   def reportWarning(msg: String): ZIO[OZEffectSetup, Throwable, Unit] =
-    ZIO.accessM(_.get.reportWarning(msg))
+    ZIO.accessZIO(_.get.reportWarning(msg))
 
   def terminate(exitState: Either[String, Unit]): ZIO[OZEffectSetup, Throwable, Unit] =
-    ZIO.accessM(_.get.terminate(exitState))
+    ZIO.accessZIO(_.get.terminate(exitState))
 
   def runOEffects(effects: List[OEffect]): RIO[OZEffectSetup, Unit] =
     ZIO

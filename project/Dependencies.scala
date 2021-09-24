@@ -3,21 +3,14 @@ import sbt._
 object Dependencies {
 
   object versions {
-    val awsSdk        = "2.17.37"
+    val awsSdk        = "2.17.45"
     val kindProjector = "0.10.3"
     val logback       = "1.2.6"
     val scopt         = "4.0.1"
-    val zio           = "1.0.11"
+    val zio           = "2.0.0-M3"
     val zioLogging    = "0.5.12"
     val zioZmx        = "0.0.8"
   }
-
-  // compiler plugins
-  private val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % versions.kindProjector)
-
-  private val compiler = Seq(
-    kindProjector
-  )
 
   private val scopt = "com.github.scopt" %% "scopt" % versions.scopt
 
@@ -50,6 +43,6 @@ object Dependencies {
       zioLoggingSlf4j
     ) map (_ % "compile")
     val test = Seq(zioTest, zioTestSbt, zioTestMagnolia) map (_ % "test")
-    compile ++ test ++ compiler
+    compile ++ test
   }
 }

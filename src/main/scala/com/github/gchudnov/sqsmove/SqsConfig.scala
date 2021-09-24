@@ -47,7 +47,7 @@ object SqsConfig {
       opt[Int](ArgParallelismShort, ArgParallelismLong)
         .optional()
         .valueName("<value>")
-        .validate(n => if(n >= 0) Right(()) else Left(s"${ArgParallelismLong} cannot be negative"))
+        .validate(n => if n >= 0 then Right(()) else Left(s"${ArgParallelismLong} cannot be negative"))
         .action((x, c) => c.copy(n = x))
         .text(s"parallelism (default: ${SqsConfig.empty.n})"),
       opt[Unit](ArgHelpShort, ArgHelpLong)
@@ -77,7 +77,7 @@ object SqsConfig {
   private def preprocessOEffects(effects: List[OEffect]): RIO[OZEffectSetup, List[OEffect]] = {
     val hasHelp = hasKey(OEffectHelpKey)(effects)
 
-    if (hasHelp) {
+    if hasHelp then {
       displayToOut(usage()) *> ZIO.fail(new SuccessExitException())
     } else {
       ZIO(effects.filterNot(it => it.isInstanceOf[ReportError] && it.asInstanceOf[ReportError].msg.startsWith(OEffectPrefix)))

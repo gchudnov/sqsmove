@@ -3,13 +3,11 @@ package com.github.gchudnov.sqsmove.sqs
 import com.github.gchudnov.sqsmove.metrics.getMetricCount
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{ GetQueueUrlRequest, Message, ReceiveMessageRequest }
-import zio.blocking.Blocking
-import zio.clock.Clock
-import zio.console.{ putStrLn, Console }
-import zio.duration._
+import zio._
 import zio.logging.{ LogLevel, Logger }
 import zio.zmx.metrics.MetricAspect
 import zio.{ Fiber, Ref, Schedule, ZIO, ZRef }
+import zio.Console._
 
 import java.io.IOException
 import scala.collection.immutable.IndexedSeq
@@ -23,7 +21,7 @@ abstract class BasicSqsMove(maxConcurrency: Int, logger: Logger[String]) extends
 
   protected val sqsClient: SqsAsyncClient = makeSqsClient(makeHttpClient(maxConcurrency))
 
-  override def getQueueUrl(name: String): ZIO[Blocking, Throwable, String] =
+  override def getQueueUrl(name: String): ZIO[Any, Throwable, String] =
     ZIO
       .fromFutureJava(sqsClient.getQueueUrl(GetQueueUrlRequest.builder.queueName(name).build()))
       .map(_.queueUrl())
@@ -31,12 +29,12 @@ abstract class BasicSqsMove(maxConcurrency: Int, logger: Logger[String]) extends
   /**
    * Receives a batch of messages. When there are no messages, the function return an empty batch (size = 0)
    */
-  protected def receiveBatch(r: ReceiveMessageRequest): ZIO[Blocking, Throwable, IndexedSeq[Message]] =
+  protected def receiveBatch(r: ReceiveMessageRequest): ZIO[Any, Throwable, IndexedSeq[Message]] =
     ZIO
       .fromFutureJava(sqsClient.receiveMessage(r))
       .map(resp => resp.messages().asScala.toIndexedSeq)
 
-  protected def sendBatch(queueUrl: String, b: IndexedSeq[Message]): ZIO[Blocking, Throwable, IndexedSeq[ReceiptHandle]] = {
+  protected def sendBatch(queueUrl: String, b: IndexedSeq[Message]): ZIO[Any, Throwable, IndexedSeq[ReceiptHandle]] = {
     val bi      = b.zipWithIndex
     val m       = bi.map(it => (it._2.toString, it._1.receiptHandle())).toMap
     val reqSend = toBatchRequest(queueUrl, bi.map((toBatchRequestEntry _).tupled))
@@ -54,7 +52,7 @@ abstract class BasicSqsMove(maxConcurrency: Int, logger: Logger[String]) extends
       }
   }
 
-  protected def deleteBatch(queueUrl: String, b: IndexedSeq[ReceiptHandle]): ZIO[Blocking, Throwable, Int] = {
+  protected def deleteBatch(queueUrl: String, b: IndexedSeq[ReceiptHandle]): ZIO[Any, Throwable, Int] = {
     val reqDel = toDeleteRequest(queueUrl, b.zipWithIndex.map((toDeleteRequestEntry _).tupled))
     ZIO
       .fromFutureJava(sqsClient.deleteMessageBatch(reqDel))
@@ -75,7 +73,7 @@ object BasicSqsMove {
 
   private val monitorDuration = 1.second
 
-  def monitor(): ZIO[Console with Clock, Nothing, Fiber.Runtime[IOException, Long]] = {
+  def monitor(): ZIO[Has[Console] with Has[Clock], Nothing, Fiber.Runtime[IOException, Long]] = {
     val schedulePolicy =
       Schedule.spaced(monitorDuration)
 
@@ -84,7 +82,7 @@ object BasicSqsMove {
         pCount <- mRef.get
         cCount <- mRef.updateAndGet(_ => getMetricCount(BasicSqsMove.metricCounterName).getOrElse(0.0))
         dMsg    = cCount - pCount
-        _      <- putStrLn(s"SQS messages moved: ${cCount.toInt} (+${dMsg.toInt})").when(dMsg > 0)
+        _      <- printLine(s"SQS messages moved: ${cCount.toInt} (+${dMsg.toInt})").when(dMsg > 0)
       } yield ()
 
     for {

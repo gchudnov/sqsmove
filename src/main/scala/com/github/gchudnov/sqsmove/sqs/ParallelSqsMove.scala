@@ -2,7 +2,6 @@ package com.github.gchudnov.sqsmove.sqs
 
 import com.github.gchudnov.sqsmove.sqs.AwsSqs.makeReceiveRequest
 import zio.ZIO
-import zio.blocking.Blocking
 import zio.logging.Logger
 import zio.stream.ZStream
 import zio.zmx.metrics.MetricsSyntax
@@ -11,9 +10,9 @@ import zio.zmx.metrics.MetricsSyntax
  * Parallel SQS Copy
  */
 final class ParallelSqsMove(maxConcurrency: Int, parallelism: Int, logger: Logger[String]) extends BasicSqsMove(maxConcurrency, logger) {
-  import BasicSqsMove._
+  import BasicSqsMove.*
 
-  override def copy(srcQueueUrl: String, dstQueueUrl: String): ZIO[Blocking, Throwable, Unit] =
+  override def copy(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZStream
       .repeat(makeReceiveRequest(srcQueueUrl))
       .mapMPar(parallelism)(r => receiveBatch(r))

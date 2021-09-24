@@ -1,16 +1,13 @@
 package com.github.gchudnov.sqsmove.sqs
 
 import software.amazon.awssdk.services.sqs.model.Message
-import zio.blocking.Blocking
-import zio.clock.Clock
-import zio.duration._
+import zio._
 import zio.logging.Logger
 import zio.stream.ZStream
-import zio.{ Chunk, Fiber, Promise, Queue, Ref, Schedule, ZIO, ZLayer, ZQueue, ZRef }
 
 import scala.collection.immutable.IndexedSeq
 
-final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logger[String], clock: Clock.Service) extends BasicSqsMove(maxConcurrency, logger) {
+final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logger[String], clock: Clock) extends BasicSqsMove(maxConcurrency, logger) {
   import AwsSqs._
 
   type StopPromise = Promise[Option[Throwable], Unit]
@@ -20,12 +17,11 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
   private val autoBatchWaitTime = 1.second
   private val autoQueueMaxSize  = 65536
 
-  override def copy(srcQueueUrl: String, dstQueueUrl: String): ZIO[Blocking, Nothing, Unit] =
-    copyWithAutoTune(srcQueueUrl, dstQueueUrl)
-      .provideSomeLayer[Blocking](ZLayer.succeed(clock))
+  override def copy(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Nothing, Unit] =
+    copyWithAutoTune(srcQueueUrl, dstQueueUrl).provideLayer(ZLayer.succeed(clock))
       .unit
 
-  private def copyWithAutoTune(srcQueueUrl: String, dstQueueUrl: String): ZIO[Clock with Blocking, Nothing, Fiber[Nothing, Unit]] = {
+  private def copyWithAutoTune(srcQueueUrl: String, dstQueueUrl: String): ZIO[Has[Clock], Nothing, Fiber[Nothing, Unit]] = {
     val cName = "auto-consumer"
     val pName = "auto-producer"
     val dName = "auto-deleter"
@@ -79,8 +75,8 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
   private def newProducer[A, B](name: String, psRef: Ref[List[StopPromise]])(
     inQueue: Queue[A],
     outQueue: Queue[B],
-    runEffect: Chunk[A] => ZIO[Blocking, Throwable, IndexedSeq[B]]
-  ): ZIO[Blocking with Any with Clock, Nothing, Fiber.Runtime[Throwable, Unit]] =
+    runEffect: Chunk[A] => ZIO[Any, Throwable, IndexedSeq[B]]
+  ): ZIO[Has[Clock], Nothing, Fiber.Runtime[Throwable, Unit]] =
     for {
       _ <- logger.debug(s"[$name] create")
       p <- Promise.make[Option[Throwable], Unit] // promise to cancel
@@ -100,7 +96,7 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
   private def newConsumer[A, B](
     name: String,
     csRef: Ref[List[StopPromise]]
-  )(outQueue: Queue[B], runEffect: => ZIO[Blocking, Throwable, IndexedSeq[B]]): ZIO[Blocking, Nothing, Fiber.Runtime[Throwable, Unit]] =
+  )(outQueue: Queue[B], runEffect: => ZIO[Any, Throwable, IndexedSeq[B]]): ZIO[Any, Nothing, Fiber.Runtime[Throwable, Unit]] =
     for {
       _ <- logger.debug(s"[$name] create")
       p <- Promise.make[Option[Throwable], Unit] // promise to cancel
@@ -120,7 +116,7 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
              .fork
     } yield f
 
-  private def newDeleter[A, B](name: String, dsRef: Ref[List[StopPromise]])(inQueue: Queue[A], runEffect: Chunk[A] => ZIO[Blocking, Throwable, Int]) =
+  private def newDeleter[A, B](name: String, dsRef: Ref[List[StopPromise]])(inQueue: Queue[A], runEffect: Chunk[A] => ZIO[Any, Throwable, Int]) =
     for {
       _ <- logger.debug(s"[$name] create")
       p <- Promise.make[Option[Throwable], Unit] // promise to cancel
