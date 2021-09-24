@@ -90,7 +90,7 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
              .tap(b => logger.debug(s"[$name] produce size: ${b.size}"))
              .mapM(b => outQueue.offerAll(b).unit)
       s3 = s1.mergeTerminateEither(s2)
-      f <- s3.runDrain.andThen(logger.debug(s"[$name] done")).fork
+      f <- (s3.runDrain *> logger.debug(s"[$name] done")).fork
     } yield f
 
   private def newConsumer[A, B](
@@ -121,14 +121,14 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
       _ <- logger.debug(s"[$name] create")
       p <- Promise.make[Option[Throwable], Unit] // promise to cancel
       _ <- dsRef.update(xs => p :: xs)
-      s1 = ZStream.fromEffectOption(p.await)
+      s1 = ZStream.fromZIOOption(p.await)
       s2 = ZStream
              .fromQueue(inQueue)
              .groupedWithin(autoBatchSize, autoBatchWaitTime)
              .filter(_.nonEmpty)
-             .mapM(b => runEffect(b))
+             .mapZIO(b => runEffect(b))
              .tap(n => logger.debug(s"[$name] delete size: $n"))
       s3 = s1.mergeTerminateEither(s2)
-      f <- s3.runDrain.andThen(logger.debug(s"[$name] done")).fork
+      f <- (s3.runDrain *> logger.debug(s"[$name] done")).fork
     } yield f
 }
