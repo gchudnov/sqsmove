@@ -87,7 +87,7 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
              .groupedWithin(autoBatchSize, autoBatchWaitTime)
              .filter(_.nonEmpty)
              .mapM(b => runEffect(b))
-             .tap(b => logger.debug(s"[$name] prodice size: ${b.size}"))
+             .tap(b => logger.debug(s"[$name] produce size: ${b.size}"))
              .mapM(b => outQueue.offerAll(b).unit)
       s3 = s1.mergeTerminateEither(s2)
       f <- s3.runDrain.andThen(logger.debug(s"[$name] done")).fork
