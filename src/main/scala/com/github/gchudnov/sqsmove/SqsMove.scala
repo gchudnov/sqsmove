@@ -61,7 +61,7 @@ object SqsMove extends App {
     (logEnv ++ sqsEnv)
   }
 
-  private def makeLogEnv(isVerbose: Boolean): ULayer[Logging] =
-    ZIO.when(isVerbose)(ZIO.succeed(JSystem.setProperty("LOG_MODE", "VERBOSE"))).toLayer >>> Slf4jLogger.make(logFormat = (_, logEntry) => logEntry)
+  private def makeLogEnv(isVerbose: Boolean): ZLayer[Any, Throwable, Logging] =
+    ZIO.when(isVerbose)(ZIO(JSystem.setProperty("LOG_MODE", "VERBOSE"))).toLayer >>> Slf4jLogger.make(logFormat = (_, logEntry) => logEntry)
 
 }
