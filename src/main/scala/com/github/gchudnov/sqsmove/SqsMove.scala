@@ -10,7 +10,7 @@ import zio.Clock
 import zio.Console._
 import zio.logging.Logging
 import zio.logging.slf4j.Slf4jLogger
-import java.lang.{System => JSystem}
+import java.lang.{ System => JSystem }
 
 object SqsMove extends App {
 
@@ -18,7 +18,7 @@ object SqsMove extends App {
 
   override def run(args: List[String]): URIO[ZEnv, ExitCode] = {
     val osetup: ZLayer[Has[Console], Throwable, OZEffectSetup] = makeOZEffectSetup()
-    val psetup: OParserSetup                              = makePEffectSetup()
+    val psetup: OParserSetup                                   = makePEffectSetup()
 
     val program = for {
       cfg <- SqsConfig.fromArgs(args)(psetup).provideSomeLayer[Has[Console]](osetup)

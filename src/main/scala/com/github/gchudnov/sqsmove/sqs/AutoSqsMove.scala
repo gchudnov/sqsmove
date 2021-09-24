@@ -18,8 +18,7 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
   private val autoQueueMaxSize  = 65536
 
   override def copy(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Nothing, Unit] =
-    copyWithAutoTune(srcQueueUrl, dstQueueUrl).provideLayer(ZLayer.succeed(clock))
-      .unit
+    copyWithAutoTune(srcQueueUrl, dstQueueUrl).provideLayer(ZLayer.succeed(clock)).unit
 
   private def copyWithAutoTune(srcQueueUrl: String, dstQueueUrl: String): ZIO[Has[Clock], Nothing, Fiber[Nothing, Unit]] = {
     val cName = "auto-consumer"

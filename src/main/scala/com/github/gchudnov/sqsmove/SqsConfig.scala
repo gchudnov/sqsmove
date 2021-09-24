@@ -47,7 +47,7 @@ object SqsConfig {
       opt[Int](ArgParallelismShort, ArgParallelismLong)
         .optional()
         .valueName("<value>")
-        .validate(n => if n >= 0 then Right(()) else Left(s"${ArgParallelismLong} cannot be negative"))
+        .validate(n => if n >= 0 then Right(()) else Left(s"$ArgParallelismLong cannot be negative"))
         .action((x, c) => c.copy(n = x))
         .text(s"parallelism (default: ${SqsConfig.empty.n})"),
       opt[Unit](ArgHelpShort, ArgHelpLong)

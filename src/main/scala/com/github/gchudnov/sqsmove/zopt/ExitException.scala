@@ -1,6 +1,6 @@
 package com.github.gchudnov.sqsmove.zopt
 
-sealed abstract class ExitException(val code: Int) extends RuntimeException(s"Exit Code: ${code}")
+sealed abstract class ExitException(val code: Int) extends RuntimeException(s"Exit Code: $code")
 
 final class SuccessExitException() extends ExitException(0)
 final class FailureExitException() extends ExitException(1)
