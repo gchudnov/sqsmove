@@ -24,7 +24,7 @@ object Dependencies {
   private val zioTestSbt      = "dev.zio" %% "zio-test-sbt"      % versions.zio
   private val zioTestMagnolia = "dev.zio" %% "zio-test-magnolia" % versions.zio
 
-  val sqsCopy: Seq[ModuleID] = {
+  val sqsMove: Seq[ModuleID] = {
     val compile = Seq(
       awsNetty,
       awsSqs,

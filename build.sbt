@@ -14,13 +14,13 @@ lazy val testSettings = Seq(
 
 lazy val allSettings = Settings.shared ++ testSettings
 
-lazy val sqsCopy = (project in file("."))
+lazy val sqsMove = (project in file("."))
   .enablePlugins(BuildInfoPlugin)
   .settings(allSettings)
   .settings(Settings.assemblySettings)
   .settings(
     name := "sqsmove",
-    libraryDependencies ++= Dependencies.sqsCopy,
+    libraryDependencies ++= Dependencies.sqsMove,
     buildInfoKeys                 := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage              := "com.github.gchudnov.sqsmove",
     assembly / mainClass          := Some("com.github.gchudnov.sqsmove.SqsMove"),
@@ -32,5 +32,5 @@ lazy val sqsCopy = (project in file("."))
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("chk", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 addCommandAlias("plg", "; reload plugins ; libraryDependencies ; reload return")
-// NOTE: to use version check for plugins, add to the meta-project (/project/proect) sbt-updates.sbt with "sbt-updates" plugin as well.
+// NOTE: to use version check for plugins, add to the meta-project (/project/project) sbt-updates.sbt with "sbt-updates" plugin as well.
 addCommandAlias("upd", ";dependencyUpdates; reload plugins; dependencyUpdates; reload return")
