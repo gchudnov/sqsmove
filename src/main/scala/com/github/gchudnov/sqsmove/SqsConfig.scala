@@ -42,12 +42,12 @@ object SqsConfig:
         .action((x, c) => c.copy(srcQueueName = x))
         .text("source queue name"),
       opt[String](ArgDstQueueShort, ArgDstQueueLong)
-        .required()
+        .optional()
         .valueName("<name>")
         .action((x, c) => c.copy(destination = Left(x)))
         .text("destination queue name"),
       opt[File](ArgDstDirLong)
-        .required()
+        .optional()
         .valueName("<path>")
         .action((x, c) => c.copy(destination = Right(x)))
         .text("destination directory path"),
@@ -64,7 +64,14 @@ object SqsConfig:
       opt[Unit](ArgVerboseShort, ArgVerboseLong)
         .optional()
         .action((_, c) => c.copy(isVerbose = true))
-        .text("verbose output")
+        .text("verbose output"),
+      checkConfig(
+      c =>
+        c.destination match
+          case Left(s) if s.isEmpty                     => Left("destination queue name is empty")
+          case Right(f) if !(f.exists && f.isDirectory) => Left("destination directory path is not found")
+          case _                                        => Right[String, Unit](())
+      )
     )
 
   private val OEffectPrefix  = "OEFFECT"
