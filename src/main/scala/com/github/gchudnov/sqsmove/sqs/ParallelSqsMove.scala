@@ -1,15 +1,13 @@
 package com.github.gchudnov.sqsmove.sqs
 
 import com.github.gchudnov.sqsmove.sqs.AwsSqs.makeReceiveRequest
-import zio.ZIO
-import zio.logging.Logger
 import zio.stream.ZStream
-import zio.zmx.metrics.MetricsSyntax
+import zio._
 
 /**
  * Parallel SQS Copy
  */
-final class ParallelSqsMove(maxConcurrency: Int, parallelism: Int, logger: Logger[String]) extends BasicSqsMove(maxConcurrency, logger) {
+final class ParallelSqsMove(maxConcurrency: Int, parallelism: Int) extends BasicSqsMove(maxConcurrency) {
   import BasicSqsMove.*
 
   override def copy(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
@@ -19,6 +17,6 @@ final class ParallelSqsMove(maxConcurrency: Int, parallelism: Int, logger: Logge
       .filter(_.nonEmpty)
       .mapZIOPar(parallelism)(b => sendBatch(dstQueueUrl, b))
       .filter(_.nonEmpty)
-      .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b) @@ aspCountMessages).unit)
+      .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b) @@ countMessages).unit)
       .runDrain
 }

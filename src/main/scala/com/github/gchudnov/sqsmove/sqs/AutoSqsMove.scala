@@ -1,14 +1,13 @@
 package com.github.gchudnov.sqsmove.sqs
 
 import software.amazon.awssdk.services.sqs.model.Message
-import zio._
-import zio.logging.Logger
+import zio.*
 import zio.stream.ZStream
 
 import scala.collection.immutable.IndexedSeq
 
-final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logger[String], clock: Clock) extends BasicSqsMove(maxConcurrency, logger) {
-  import AwsSqs._
+final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, clock: Clock) extends BasicSqsMove(maxConcurrency) {
+  import AwsSqs.*
 
   type StopPromise = Promise[Option[Throwable], Unit]
 
@@ -60,12 +59,12 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
   private def scaleWorkers[R, E, A](name: String, nRef: Ref[Int], psRef: Ref[List[StopPromise]])(newWorker: => ZIO[R, E, A]): ZIO[R, E, Unit] =
     for {
       n                 <- nRef.get
-      _                 <- logger.debug(s"[$name] n = $n")
+      _                 <- ZIO.logDebug(s"[$name] n = $n")
       ps                <- psRef.get
       (retains, removes) = ps.splitAt(n)
       _                 <- psRef.set(retains)
-      _                 <- logger.debug(s"[$name] current: ${ps.size}; to_create: ${n - retains.size}; to_delete: ${removes.size};")
-      _                 <- ZIO.foreachDiscard(removes)(it => logger.debug(s"[$name] delete") *> it.fail(None))
+      _                 <- ZIO.logDebug(s"[$name] current: ${ps.size}; to_create: ${n - retains.size}; to_delete: ${removes.size};")
+      _                 <- ZIO.foreachDiscard(removes)(it => ZIO.logDebug(s"[$name] delete") *> it.fail(None))
       _ <- ZIO.foreachDiscard(List.fill(n - retains.size)(())) { _ =>
              newWorker
            }
@@ -77,7 +76,7 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
     runEffect: Chunk[A] => ZIO[Any, Throwable, IndexedSeq[B]]
   ): ZIO[Has[Clock], Nothing, Fiber.Runtime[Throwable, Unit]] =
     for {
-      _ <- logger.debug(s"[$name] create")
+      _ <- ZIO.logDebug(s"[$name] create")
       p <- Promise.make[Option[Throwable], Unit] // promise to cancel
       _ <- psRef.update(xs => p :: xs)
       s1 = ZStream.fromZIOOption(p.await)
@@ -86,10 +85,10 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
              .groupedWithin(autoBatchSize, autoBatchWaitTime)
              .filter(_.nonEmpty)
              .mapZIO(b => runEffect(b))
-             .tap(b => logger.debug(s"[$name] produce size: ${b.size}"))
+             .tap(b => ZIO.logDebug(s"[$name] produce size: ${b.size}"))
              .mapZIO(b => outQueue.offerAll(b).unit)
       s3 = s1.mergeTerminateEither(s2)
-      f <- (s3.runDrain *> logger.debug(s"[$name] done")).fork
+      f <- (s3.runDrain *> ZIO.logDebug(s"[$name] done")).fork
     } yield f
 
   private def newConsumer[A, B](
@@ -97,7 +96,7 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
     csRef: Ref[List[StopPromise]]
   )(outQueue: Queue[B], runEffect: => ZIO[Any, Throwable, IndexedSeq[B]]): ZIO[Any, Nothing, Fiber.Runtime[Throwable, Unit]] =
     for {
-      _ <- logger.debug(s"[$name] create")
+      _ <- ZIO.logDebug(s"[$name] create")
       p <- Promise.make[Option[Throwable], Unit] // promise to cancel
       _ <- csRef.update(xs => p :: xs)
       f <- runEffect
@@ -117,7 +116,7 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
 
   private def newDeleter[A, B](name: String, dsRef: Ref[List[StopPromise]])(inQueue: Queue[A], runEffect: Chunk[A] => ZIO[Any, Throwable, Int]) =
     for {
-      _ <- logger.debug(s"[$name] create")
+      _ <- ZIO.logDebug(s"[$name] create")
       p <- Promise.make[Option[Throwable], Unit] // promise to cancel
       _ <- dsRef.update(xs => p :: xs)
       s1 = ZStream.fromZIOOption(p.await)
@@ -126,8 +125,8 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, logger: Logge
              .groupedWithin(autoBatchSize, autoBatchWaitTime)
              .filter(_.nonEmpty)
              .mapZIO(b => runEffect(b))
-             .tap(n => logger.debug(s"[$name] delete size: $n"))
+             .tap(n => ZIO.logDebug(s"[$name] delete size: $n"))
       s3 = s1.mergeTerminateEither(s2)
-      f <- (s3.runDrain *> logger.debug(s"[$name] done")).fork
+      f <- (s3.runDrain *> ZIO.logDebug(s"[$name] done")).fork
     } yield f
 }

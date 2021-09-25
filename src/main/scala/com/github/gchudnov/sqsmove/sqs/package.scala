@@ -1,6 +1,5 @@
 package com.github.gchudnov.sqsmove
 
-import zio.logging.{ Logger, Logging }
 import zio.*
 
 package object sqs {
@@ -15,20 +14,15 @@ package object sqs {
     val any: ZLayer[Sqs, Nothing, Sqs] =
       ZLayer.environment[Sqs]
 
-    def serial(maxConcurrency: Int): ZLayer[Logging, Throwable, Sqs] = (for {
-      logger <- ZIO.service[Logger[String]]
-      service = new SerialSqsMove(maxConcurrency, logger)
-    } yield service).toLayer
+    def serial(maxConcurrency: Int): ZLayer[Any, Throwable, Sqs] =
+      ZIO.attempt(new SerialSqsMove(maxConcurrency)).toLayer
 
-    def parallel(maxConcurrency: Int, parallelism: Int): ZLayer[Logging, Throwable, Sqs] = (for {
-      logger <- ZIO.service[Logger[String]]
-      service = new ParallelSqsMove(maxConcurrency = maxConcurrency, parallelism = parallelism, logger = logger)
-    } yield service).toLayer
+    def parallel(maxConcurrency: Int, parallelism: Int): ZLayer[Any, Throwable, Sqs] =
+      ZIO.attempt(new ParallelSqsMove(maxConcurrency = maxConcurrency, parallelism = parallelism)).toLayer
 
-    def auto(maxConcurrency: Int, initParallelism: Int): ZLayer[Logging with Has[Clock], Throwable, Sqs] = (for {
-      logger <- ZIO.service[Logger[String]]
+    def auto(maxConcurrency: Int, initParallelism: Int): ZLayer[Has[Clock], Throwable, Sqs] = (for {
       clock  <- ZIO.service[Clock]
-      service = new AutoSqsMove(maxConcurrency = maxConcurrency, initParallelism = initParallelism, logger = logger, clock = clock)
+      service = new AutoSqsMove(maxConcurrency = maxConcurrency, initParallelism = initParallelism, clock = clock)
     } yield service).toLayer
   }
 

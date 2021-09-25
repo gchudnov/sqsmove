@@ -1,23 +1,19 @@
 package com.github.gchudnov.sqsmove.sqs
 
-import com.github.gchudnov.sqsmove.metrics.getMetricCount
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{ GetQueueUrlRequest, Message, ReceiveMessageRequest }
-import zio._
-import zio.logging.{ LogLevel, Logger }
-import zio.zmx.metrics.MetricAspect
-import zio.{ Fiber, Ref, Schedule, ZIO, ZRef }
-import zio.Console._
+import zio.*
+import zio.Console.*
 
 import java.io.IOException
 import scala.collection.immutable.IndexedSeq
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 /**
  * Basic SQS Functionality
  */
-abstract class BasicSqsMove(maxConcurrency: Int, logger: Logger[String]) extends Sqs.Service {
-  import AwsSqs._
+abstract class BasicSqsMove(maxConcurrency: Int) extends Sqs.Service {
+  import AwsSqs.*
 
   protected val sqsClient: SqsAsyncClient = makeSqsClient(makeHttpClient(maxConcurrency))
 
@@ -47,7 +43,7 @@ abstract class BasicSqsMove(maxConcurrency: Int, logger: Logger[String]) extends
         val ids = ss.flatMap(e => m.get(e.id())).toIndexedSeq
 
         ZIO
-          .when(fs.nonEmpty)(logger.log(LogLevel.Warn)(s"Failed to send ${fs.size} entries"))
+          .when(fs.nonEmpty)(ZIO.logWarning(s"Failed to send ${fs.size} entries"))
           .as(ids)
       }
   }
@@ -61,15 +57,15 @@ abstract class BasicSqsMove(maxConcurrency: Int, logger: Logger[String]) extends
         val ss = resp.successful().asScala
 
         ZIO
-          .when(fs.nonEmpty)(logger.log(LogLevel.Warn)(s"Failed to delete ${fs.size} entries"))
+          .when(fs.nonEmpty)(ZIO.logWarning(s"Failed to delete ${fs.size} entries"))
           .as(ss.length)
       }
   }
 }
 
 object BasicSqsMove {
-  val metricCounterName: String           = "countMessages"
-  val aspCountMessages: MetricAspect[Int] = MetricAspect.countValueWith[Int](metricCounterName)(_.toDouble)
+  val metricCounterName: String             = "countMessages"
+  val countMessages: ZIOMetric.Counter[Int] = ZIOMetric.countValueWith[Int](metricCounterName)(_.toDouble)
 
   private val monitorDuration = 1.second
 
@@ -80,7 +76,7 @@ object BasicSqsMove {
     val iteration = (mRef: Ref[Double]) =>
       for {
         pCount <- mRef.get
-        cCount <- mRef.updateAndGet(_ => getMetricCount(BasicSqsMove.metricCounterName).getOrElse(0.0))
+        cCount <- countMessages.count
         dMsg    = cCount - pCount
         _      <- printLine(s"SQS messages moved: ${cCount.toInt} (+${dMsg.toInt})").when(dMsg > 0)
       } yield ()

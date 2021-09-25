@@ -8,8 +8,6 @@ import scopt.{ DefaultOParserSetup, OParserSetup }
 import zio._
 import zio.Clock
 import zio.Console._
-import zio.logging.Logging
-import zio.logging.slf4j.Slf4jLogger
 import java.lang.{ System => JSystem }
 
 object SqsMove extends App {
@@ -48,20 +46,16 @@ object SqsMove extends App {
       override def showUsageOnError: Option[Boolean] = Some(false)
     }
 
-  private def makeEnv(cfg: SqsConfig): ZLayer[Has[Clock], Throwable, Logging with Sqs] = {
+  private def makeEnv(cfg: SqsConfig): ZLayer[Has[Clock], Throwable, Sqs] = {
     val clockEnv = Clock.any
-    val logEnv   = makeLogEnv(cfg.isVerbose)
     val copyEnv = cfg.n match {
       case 0 => Sqs.auto(maxConcurrency = sqsMaxConcurrency, initParallelism = 1)
       case 1 => Sqs.serial(maxConcurrency = sqsMaxConcurrency)
       case m => Sqs.parallel(maxConcurrency = sqsMaxConcurrency, parallelism = m)
     }
-    val sqsEnv = (logEnv ++ clockEnv) >>> copyEnv
+    val appEnv = clockEnv >>> copyEnv
 
-    (logEnv ++ sqsEnv)
+    appEnv
   }
-
-  private def makeLogEnv(isVerbose: Boolean): ZLayer[Any, Throwable, Logging] =
-    ZIO.when(isVerbose)(ZIO(JSystem.setProperty("LOG_MODE", "VERBOSE"))).toLayer >>> Slf4jLogger.make(logFormat = (_, logEntry) => logEntry)
 
 }
