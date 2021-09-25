@@ -70,15 +70,14 @@ object BasicSqsMove {
   private val monitorDuration = 1.second
 
   def monitor(): ZIO[Has[Console] with Has[Clock], Nothing, Fiber.Runtime[IOException, Long]] = {
-    val schedulePolicy =
-      Schedule.spaced(monitorDuration)
+    val schedulePolicy = Schedule.spaced(monitorDuration)
 
     val iteration = (mRef: Ref[Double]) =>
       for {
-        pCount <- mRef.get
         cCount <- countMessages.count
+        pCount <- mRef.getAndSet(cCount)
         dMsg    = cCount - pCount
-        _      <- printLine(s"SQS messages moved: ${cCount.toInt} (+${dMsg.toInt})").when(dMsg > 0)
+        _      <- Clock.currentDateTime.flatMap(dt => printLine(s"[${dt}] SQS messages moved: ${cCount.toInt} (+${dMsg.toInt})").when(dMsg > 0))
       } yield ()
 
     for {
