@@ -6,8 +6,8 @@ import com.github.gchudnov.sqsmove.zopt.SuccessExitException
 import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.OZEffectSetup
 import scopt.{ DefaultOParserSetup, OParserSetup }
 import zio.*
-import zio.zio.Clock
-import zio.zio.Console.*
+import zio.Clock
+import zio.Console.*
 
 import java.lang.System as JSystem
 
