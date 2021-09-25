@@ -1,8 +1,8 @@
 package com.github.gchudnov.sqsmove.sqs
 
 import com.github.gchudnov.sqsmove.sqs.AwsSqs.makeReceiveRequest
+import zio.*
 import zio.stream.ZStream
-import zio._
 
 /**
  * Parallel SQS Copy
