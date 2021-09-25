@@ -71,8 +71,8 @@ object SqsConfig:
         .text("verbose output"),
       checkConfig(c =>
         c.destination match
-          case Left(s) if s.isEmpty                     => Left("destination queue name is empty")
-          case Right(f) if !(f.exists && f.isDirectory) => Left("destination directory path is not found")
+          case Left(s) if s.isEmpty                     => Left(s"destination queue name '${s}' is empty")
+          case Right(f) if !(f.exists && f.isDirectory) => Left(s"destination directory path '${f.getAbsolutePath}' is not found")
           case _                                        => Right[String, Unit](())
       )
     )
