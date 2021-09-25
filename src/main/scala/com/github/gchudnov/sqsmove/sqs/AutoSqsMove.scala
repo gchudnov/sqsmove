@@ -3,6 +3,7 @@ package com.github.gchudnov.sqsmove.sqs
 import software.amazon.awssdk.services.sqs.model.Message
 import zio.*
 import zio.stream.ZStream
+import java.io.File
 
 import scala.collection.immutable.IndexedSeq
 
@@ -16,10 +17,12 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, clock: Clock)
   private val autoBatchWaitTime = 1.second
   private val autoQueueMaxSize  = 65536
 
-  override def copy(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Nothing, Unit] =
-    copyWithAutoTune(srcQueueUrl, dstQueueUrl).provideLayer(ZLayer.succeed(clock)).unit
+  override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Nothing, Unit] =
+    moveWithAutoTune(srcQueueUrl, dstQueueUrl).provideLayer(ZLayer.succeed(clock)).unit
 
-  private def copyWithAutoTune(srcQueueUrl: String, dstQueueUrl: String): ZIO[Has[Clock], Nothing, Fiber[Nothing, Unit]] = {
+  override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] = ???
+
+  private def moveWithAutoTune(srcQueueUrl: String, dstQueueUrl: String): ZIO[Has[Clock], Nothing, Fiber[Nothing, Unit]] = {
     val cName = "auto-consumer"
     val pName = "auto-producer"
     val dName = "auto-deleter"
@@ -29,8 +32,8 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, clock: Clock)
       pRef <- ZRef.make(initParallelism)
       dRef <- ZRef.make(initParallelism)
 
-      messages <- ZQueue.bounded[Message](autoQueueMaxSize) // input messages to copy
-      handles  <- ZQueue.bounded[ReceiptHandle](autoQueueMaxSize) // message handles to delete when a message was copied
+      messages <- ZQueue.bounded[Message](autoQueueMaxSize)      // input messages to move
+      handles <- ZQueue.bounded[ReceiptHandle](autoQueueMaxSize) // message handles to delete when a message was copied
 
       csRef <- ZRef.make(List.empty[StopPromise]) // active consumers
       psRef <- ZRef.make(List.empty[StopPromise]) // active producers

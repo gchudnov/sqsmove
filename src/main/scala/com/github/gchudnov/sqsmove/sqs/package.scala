@@ -1,6 +1,7 @@
 package com.github.gchudnov.sqsmove
 
 import zio.*
+import java.io.File
 
 package object sqs {
   type Sqs = Has[Sqs.Service]
@@ -8,7 +9,8 @@ package object sqs {
   object Sqs {
     trait Service {
       def getQueueUrl(name: String): ZIO[Any, Throwable, String]
-      def copy(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit]
+      def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit]
+      def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit]
     }
 
     val any: ZLayer[Sqs, Nothing, Sqs] =
@@ -27,8 +29,11 @@ package object sqs {
   }
 
   def getQueueUrl(name: String): ZIO[Sqs, Throwable, String] =
-    ZIO.accessZIO(_.get.getQueueUrl(name))
+    ZIO.serviceWith(_.getQueueUrl(name))
 
-  def copy(srcQueueUrl: String, dstQueueUrl: String): ZIO[Sqs, Throwable, Unit] =
-    ZIO.accessZIO(_.get.copy(srcQueueUrl, dstQueueUrl))
+  def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Sqs, Throwable, Unit] =
+    ZIO.serviceWith(_.move(srcQueueUrl, dstQueueUrl))
+
+  def download(srcQueueUrl: String, dstDir: File): ZIO[Sqs, Throwable, Unit] =
+    ZIO.serviceWith(_.download(srcQueueUrl, dstDir))
 }

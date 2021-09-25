@@ -1,13 +1,14 @@
 package com.github.gchudnov.sqsmove
 
 import com.github.gchudnov.sqsmove.sqs.BasicSqsMove.monitor
-import com.github.gchudnov.sqsmove.sqs.{ copy, getQueueUrl, Sqs }
+import com.github.gchudnov.sqsmove.sqs.{ download, getQueueUrl, move, Sqs }
 import com.github.gchudnov.sqsmove.zopt.SuccessExitException
 import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.OZEffectSetup
 import scopt.{ DefaultOParserSetup, OParserSetup }
 import zio.*
 import zio.Clock
 import zio.Console.*
+import java.io.File
 
 import java.lang.System as JSystem
 
@@ -31,11 +32,24 @@ object SqsMove extends ZIOAppDefault {
   }
 
   private def makeProgram(cfg: SqsConfig): ZIO[Sqs with Has[Clock] with Has[Console], Throwable, Unit] =
+    cfg.destination.fold(
+      dstQueueName => makeQueueMoveProgram(cfg.srcQueueName, dstQueueName),
+      dstDir => makeDirMoveProgram(cfg.srcQueueName, dstDir)
+    )
+
+  private def makeQueueMoveProgram(srcQueueName: String, dstQueueName: String): ZIO[Sqs with Has[Clock] with Has[Console], Throwable, Unit] =
     for {
-      srcQueueUrl <- getQueueUrl(cfg.srcQueueName)
-      dstQueueUrl <- getQueueUrl(cfg.dstQueueName)
+      srcQueueUrl <- getQueueUrl(srcQueueName)
+      dstQueueUrl <- getQueueUrl(dstQueueName)
       _           <- monitor()
-      _           <- copy(srcQueueUrl, dstQueueUrl)
+      _           <- move(srcQueueUrl, dstQueueUrl)
+    } yield ()
+
+  private def makeDirMoveProgram(srcQueueName: String, dstDir: File): ZIO[Sqs with Has[Clock] with Has[Console], Throwable, Unit] =
+    for {
+      srcQueueUrl <- getQueueUrl(srcQueueName)
+      _           <- monitor()
+      _           <- download(srcQueueUrl, dstDir)
     } yield ()
 
   private def makeOZEffectSetup(): ZLayer[Has[Console], Nothing, OZEffectSetup] =

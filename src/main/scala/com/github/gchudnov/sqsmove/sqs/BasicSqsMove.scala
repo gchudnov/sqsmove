@@ -77,7 +77,7 @@ object BasicSqsMove {
         cCount <- countMessages.count
         pCount <- mRef.getAndSet(cCount)
         dMsg    = cCount - pCount
-        _      <- Clock.currentDateTime.flatMap(dt => printLine(s"[${dt}] SQS messages moved: ${cCount.toInt} (+${dMsg.toInt})").when(dMsg > 0))
+        _      <- Clock.currentDateTime.flatMap(dt => printLine(s"[$dt] SQS messages moved: ${cCount.toInt} (+${dMsg.toInt})").when(dMsg > 0))
       } yield ()
 
     for {

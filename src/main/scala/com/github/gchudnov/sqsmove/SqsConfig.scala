@@ -4,25 +4,27 @@ import com.github.gchudnov.sqsmove.zopt.SuccessExitException
 import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.{ displayToOut, runOEffects, OZEffectSetup }
 import scopt.OEffect.ReportError
 import scopt.{ OEffect, OParser, OParserSetup }
-import zio.{ RIO, ZIO }
+import zio._
+import java.io.File
 
 final case class SqsConfig(
   srcQueueName: String,
-  dstQueueName: String,
+  destination: Either[String, File],
   n: Int,
   isVerbose: Boolean
 )
 
 object SqsConfig {
 
-  val empty: SqsConfig = SqsConfig(srcQueueName = "", dstQueueName = "", n = 16, isVerbose = false)
+  val empty: SqsConfig = SqsConfig(srcQueueName = "", destination = Left(""), n = 16, isVerbose = false)
 
   private val ArgHelpShort        = 'h'
   private val ArgHelpLong         = "help"
-  private val ArgSourceShort      = 's'
-  private val ArgSourceLong       = "src-queue"
-  private val ArgDestinationShort = 'd'
-  private val ArgDestinationLong  = "dst-queue"
+  private val ArgSrcQueueShort    = 's'
+  private val ArgSrcQueueLong     = "src-queue"
+  private val ArgDstQueueShort    = 'd'
+  private val ArgDstQueueLong     = "dst-queue"
+  private val ArgDstDirLong       = "dst-dir"
   private val ArgParallelismShort = 'p'
   private val ArgParallelismLong  = "parallelism"
   private val ArgVerboseShort     = 'v'
@@ -34,16 +36,21 @@ object SqsConfig {
     OParser.sequence(
       programName(BuildInfo.name),
       head(BuildInfo.name, BuildInfo.version),
-      opt[String](ArgSourceShort, ArgSourceLong)
+      opt[String](ArgSrcQueueShort, ArgSrcQueueLong)
         .required()
         .valueName("<name>")
         .action((x, c) => c.copy(srcQueueName = x))
         .text("source queue name"),
-      opt[String](ArgDestinationShort, ArgDestinationLong)
+      opt[String](ArgDstQueueShort, ArgDstQueueLong)
         .required()
         .valueName("<name>")
-        .action((x, c) => c.copy(dstQueueName = x))
+        .action((x, c) => c.copy(destination = Left(x)))
         .text("destination queue name"),
+      opt[File](ArgDstDirLong)
+        .required()
+        .valueName("<path>")
+        .action((x, c) => c.copy(destination = Right(x)))
+        .text("destination directory path"),
       opt[Int](ArgParallelismShort, ArgParallelismLong)
         .optional()
         .valueName("<value>")
