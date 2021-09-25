@@ -4,12 +4,12 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model._
+import software.amazon.awssdk.services.sqs.model.*
 
 import scala.collection.immutable.IndexedSeq
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
-object AwsSqs {
+object AwsSqs:
   type ReceiptHandle = String
 
   private val receiveAllAttributeNames   = List("All").asJava
@@ -68,5 +68,3 @@ object AwsSqs {
       .queueUrl(queueUrl)
       .entries(entries.asJava)
       .build()
-
-}

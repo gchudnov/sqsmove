@@ -7,7 +7,7 @@ import java.io.File
 
 import scala.collection.immutable.IndexedSeq
 
-final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, clock: Clock) extends BasicSqsMove(maxConcurrency) {
+final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, clock: Clock) extends BasicSqsMove(maxConcurrency):
   import AwsSqs.*
 
   type StopPromise = Promise[Option[Throwable], Unit]
@@ -22,12 +22,12 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, clock: Clock)
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] = ???
 
-  private def moveWithAutoTune(srcQueueUrl: String, dstQueueUrl: String): ZIO[Has[Clock], Nothing, Fiber[Nothing, Unit]] = {
+  private def moveWithAutoTune(srcQueueUrl: String, dstQueueUrl: String): ZIO[Has[Clock], Nothing, Fiber[Nothing, Unit]] =
     val cName = "auto-consumer"
     val pName = "auto-producer"
     val dName = "auto-deleter"
 
-    val res = for {
+    val res = for
       cRef <- ZRef.make(initParallelism)
       pRef <- ZRef.make(initParallelism)
       dRef <- ZRef.make(initParallelism)
@@ -52,15 +52,13 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, clock: Clock)
               .unit
               .fork
 
-      // TODO: implement controller
-
-    } yield f1
+    // TODO: implement controller
+    yield f1
 
     res
-  }
 
   private def scaleWorkers[R, E, A](name: String, nRef: Ref[Int], psRef: Ref[List[StopPromise]])(newWorker: => ZIO[R, E, A]): ZIO[R, E, Unit] =
-    for {
+    for
       n                 <- nRef.get
       _                 <- ZIO.logDebug(s"[$name] n = $n")
       ps                <- psRef.get
@@ -71,14 +69,14 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, clock: Clock)
       _ <- ZIO.foreachDiscard(List.fill(n - retains.size)(())) { _ =>
              newWorker
            }
-    } yield ()
+    yield ()
 
   private def newProducer[A, B](name: String, psRef: Ref[List[StopPromise]])(
     inQueue: Queue[A],
     outQueue: Queue[B],
     runEffect: Chunk[A] => ZIO[Any, Throwable, IndexedSeq[B]]
   ): ZIO[Has[Clock], Nothing, Fiber.Runtime[Throwable, Unit]] =
-    for {
+    for
       _ <- ZIO.logDebug(s"[$name] create")
       p <- Promise.make[Option[Throwable], Unit] // promise to cancel
       _ <- psRef.update(xs => p :: xs)
@@ -92,13 +90,13 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, clock: Clock)
              .mapZIO(b => outQueue.offerAll(b).unit)
       s3 = s1.mergeTerminateEither(s2)
       f <- (s3.runDrain *> ZIO.logDebug(s"[$name] done")).fork
-    } yield f
+    yield f
 
   private def newConsumer[A, B](
     name: String,
     csRef: Ref[List[StopPromise]]
   )(outQueue: Queue[B], runEffect: => ZIO[Any, Throwable, IndexedSeq[B]]): ZIO[Any, Nothing, Fiber.Runtime[Throwable, Unit]] =
-    for {
+    for
       _ <- ZIO.logDebug(s"[$name] create")
       p <- Promise.make[Option[Throwable], Unit] // promise to cancel
       _ <- csRef.update(xs => p :: xs)
@@ -115,10 +113,10 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, clock: Clock)
                )
              )
              .fork
-    } yield f
+    yield f
 
   private def newDeleter[A, B](name: String, dsRef: Ref[List[StopPromise]])(inQueue: Queue[A], runEffect: Chunk[A] => ZIO[Any, Throwable, Int]) =
-    for {
+    for
       _ <- ZIO.logDebug(s"[$name] create")
       p <- Promise.make[Option[Throwable], Unit] // promise to cancel
       _ <- dsRef.update(xs => p :: xs)
@@ -131,5 +129,4 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, clock: Clock)
              .tap(n => ZIO.logDebug(s"[$name] delete size: $n"))
       s3 = s1.mergeTerminateEither(s2)
       f <- (s3.runDrain *> ZIO.logDebug(s"[$name] done")).fork
-    } yield f
-}
+    yield f

@@ -8,7 +8,7 @@ import java.io.File
 /**
  * Parallel SQS Move
  */
-final class ParallelSqsMove(maxConcurrency: Int, parallelism: Int) extends BasicSqsMove(maxConcurrency) {
+final class ParallelSqsMove(maxConcurrency: Int, parallelism: Int) extends BasicSqsMove(maxConcurrency):
   import BasicSqsMove.*
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
@@ -22,4 +22,3 @@ final class ParallelSqsMove(maxConcurrency: Int, parallelism: Int) extends Basic
       .runDrain
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] = ???
-}

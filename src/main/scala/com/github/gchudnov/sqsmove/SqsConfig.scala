@@ -4,7 +4,7 @@ import com.github.gchudnov.sqsmove.zopt.SuccessExitException
 import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.{ displayToOut, runOEffects, OZEffectSetup }
 import scopt.OEffect.ReportError
 import scopt.{ OEffect, OParser, OParserSetup }
-import zio._
+import zio.*
 import java.io.File
 
 final case class SqsConfig(
@@ -14,7 +14,7 @@ final case class SqsConfig(
   isVerbose: Boolean
 )
 
-object SqsConfig {
+object SqsConfig:
 
   val empty: SqsConfig = SqsConfig(srcQueueName = "", destination = Left(""), n = 16, isVerbose = false)
 
@@ -31,8 +31,8 @@ object SqsConfig {
   private val ArgVerboseLong      = "verbose"
 
   private val argsBuilder = OParser.builder[SqsConfig]
-  private val argsParser = {
-    import argsBuilder._
+  private val argsParser =
+    import argsBuilder.*
     OParser.sequence(
       programName(BuildInfo.name),
       head(BuildInfo.name, BuildInfo.version),
@@ -66,30 +66,24 @@ object SqsConfig {
         .action((_, c) => c.copy(isVerbose = true))
         .text("verbose output")
     )
-  }
 
   private val OEffectPrefix  = "OEFFECT"
   private val OEffectHelpKey = s"$OEffectPrefix:HELP"
 
   def fromArgs(args: List[String])(argParserSetup: OParserSetup): RIO[OZEffectSetup, SqsConfig] =
-    OParser.runParser(argsParser, args, SqsConfig.empty, argParserSetup) match {
+    OParser.runParser(argsParser, args, SqsConfig.empty, argParserSetup) match
       case (result, effects) =>
-        for {
+        for
           peffects <- preprocessOEffects(effects)
           _        <- runOEffects(peffects)
           config   <- ZIO.fromOption(result).orElseFail(new IllegalArgumentException(s"Use --$ArgHelpLong for more information."))
-        } yield config
-    }
+        yield config
 
-  private def preprocessOEffects(effects: List[OEffect]): RIO[OZEffectSetup, List[OEffect]] = {
+  private def preprocessOEffects(effects: List[OEffect]): RIO[OZEffectSetup, List[OEffect]] =
     val hasHelp = hasKey(OEffectHelpKey)(effects)
 
-    if hasHelp then {
-      displayToOut(usage()) *> ZIO.fail(new SuccessExitException())
-    } else {
-      ZIO(effects.filterNot(it => it.isInstanceOf[ReportError] && it.asInstanceOf[ReportError].msg.startsWith(OEffectPrefix)))
-    }
-  }
+    if hasHelp then displayToOut(usage()) *> ZIO.fail(new SuccessExitException())
+    else ZIO(effects.filterNot(it => it.isInstanceOf[ReportError] && it.asInstanceOf[ReportError].msg.startsWith(OEffectPrefix)))
 
   private def hasKey(key: String)(effects: List[OEffect]): Boolean =
     effects.exists {
@@ -99,4 +93,3 @@ object SqsConfig {
 
   def usage(): String =
     OParser.usage(argsParser)
-}
