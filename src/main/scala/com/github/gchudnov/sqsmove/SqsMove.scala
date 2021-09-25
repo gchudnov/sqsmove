@@ -5,28 +5,29 @@ import com.github.gchudnov.sqsmove.sqs.{ copy, getQueueUrl, Sqs }
 import com.github.gchudnov.sqsmove.zopt.SuccessExitException
 import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.OZEffectSetup
 import scopt.{ DefaultOParserSetup, OParserSetup }
-import zio._
-import zio.Clock
-import zio.Console._
-import java.lang.{ System => JSystem }
+import zio.*
+import zio.zio.Clock
+import zio.zio.Console.*
 
-object SqsMove extends App {
+import java.lang.System as JSystem
+
+object SqsMove extends ZIOAppDefault {
 
   private val sqsMaxConcurrency: Int = 512
 
-  override def run(args: List[String]): URIO[ZEnv, ExitCode] = {
+  override def run: ZIO[Environment with ZEnv with Has[ZIOAppArgs], Any, Any] = {
     val osetup: ZLayer[Has[Console], Throwable, OZEffectSetup] = makeOZEffectSetup()
     val psetup: OParserSetup                                   = makePEffectSetup()
 
     val program = for {
-      cfg <- SqsConfig.fromArgs(args)(psetup).provideSomeLayer[Has[Console]](osetup)
+      as  <- args
+      cfg <- SqsConfig.fromArgs(as.toList)(psetup).provideSomeLayer[Has[Console]](osetup)
       env  = makeEnv(cfg)
       _   <- makeProgram(cfg).provideSomeLayer[Has[Clock] with Has[Console]](env)
     } yield ()
 
     program.catchSome { case _: SuccessExitException => ZIO.unit }
       .tapError(t => printLineError(s"Error: ${t.getMessage}"))
-      .foldCause(_ => ExitCode.failure, _ => ExitCode.success)
   }
 
   private def makeProgram(cfg: SqsConfig): ZIO[Sqs with Has[Clock] with Has[Console], Throwable, Unit] =
