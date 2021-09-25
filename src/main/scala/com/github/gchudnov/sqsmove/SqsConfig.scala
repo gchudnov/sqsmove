@@ -2,6 +2,7 @@ package com.github.gchudnov.sqsmove
 
 import com.github.gchudnov.sqsmove.zopt.SuccessExitException
 import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.{ displayToOut, runOEffects, OZEffectSetup }
+import com.github.gchudnov.sqsmove.BuildInfo as AppBuildInfo
 import scopt.OEffect.ReportError
 import scopt.{ OEffect, OParser, OParserSetup }
 import zio.*
@@ -16,7 +17,10 @@ final case class SqsConfig(
 
 object SqsConfig:
 
-  val empty: SqsConfig = SqsConfig(srcQueueName = "", destination = Left(""), n = 16, isVerbose = false)
+  lazy val empty: SqsConfig = SqsConfig(srcQueueName = "", destination = Left(""), n = DefaultParallelism, isVerbose = DefaultVerbose)
+
+  private val DefaultParallelism = 16
+  private val DefaultVerbose     = false
 
   private val ArgHelpShort        = 'h'
   private val ArgHelpLong         = "help"
@@ -34,8 +38,8 @@ object SqsConfig:
   private val argsParser =
     import argsBuilder.*
     OParser.sequence(
-      programName(BuildInfo.name),
-      head(BuildInfo.name, BuildInfo.version),
+      programName(AppBuildInfo.name),
+      head(AppBuildInfo.name, AppBuildInfo.version),
       opt[String](ArgSrcQueueShort, ArgSrcQueueLong)
         .required()
         .valueName("<name>")
@@ -65,8 +69,7 @@ object SqsConfig:
         .optional()
         .action((_, c) => c.copy(isVerbose = true))
         .text("verbose output"),
-      checkConfig(
-      c =>
+      checkConfig(c =>
         c.destination match
           case Left(s) if s.isEmpty                     => Left("destination queue name is empty")
           case Right(f) if !(f.exists && f.isDirectory) => Left("destination directory path is not found")
