@@ -1,14 +1,14 @@
 package com.github.gchudnov.sqsmove.sqs
 
 import com.github.gchudnov.sqsmove.sqs.AwsSqs.makeReceiveRequest
-import com.github.gchudnov.sqsmove.sqs.BasicSqsMove.countMessages
+import com.github.gchudnov.sqsmove.sqs.BasicSqs.countMessages
 import zio.*
 import java.io.File
 
 /**
  * Series SQS Move
  */
-final class SerialSqsMove(maxConcurrency: Int) extends BasicSqsMove(maxConcurrency):
+final class SerialSqs(maxConcurrency: Int) extends BasicSqs(maxConcurrency):
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZIO
@@ -18,3 +18,7 @@ final class SerialSqsMove(maxConcurrency: Int) extends BasicSqsMove(maxConcurren
       .forever
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] = ???
+
+object SerialSqs:
+  def layer(maxConcurrency: Int): ZLayer[Any, Throwable, Has[Sqs]] =
+    ZIO.attempt(new SerialSqs(maxConcurrency)).toLayer

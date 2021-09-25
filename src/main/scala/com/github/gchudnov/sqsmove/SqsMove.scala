@@ -1,7 +1,8 @@
 package com.github.gchudnov.sqsmove
 
-import com.github.gchudnov.sqsmove.sqs.BasicSqsMove.monitor
-import com.github.gchudnov.sqsmove.sqs.{ download, getQueueUrl, move, Sqs }
+import com.github.gchudnov.sqsmove.sqs.BasicSqs.monitor
+import com.github.gchudnov.sqsmove.sqs.{ AutoSqs, ParallelSqs, SerialSqs, Sqs }
+import com.github.gchudnov.sqsmove.sqs.Sqs.*
 import com.github.gchudnov.sqsmove.zopt.SuccessExitException
 import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.OZEffectSetup
 import scopt.{ DefaultOParserSetup, OParserSetup }
@@ -30,13 +31,13 @@ object SqsMove extends ZIOAppDefault:
     program.catchSome { case _: SuccessExitException => ZIO.unit }
       .tapError(t => printLineError(s"Error: ${t.getMessage}"))
 
-  private def makeProgram(cfg: SqsConfig): ZIO[Sqs with Has[Clock] with Has[Console], Throwable, Unit] =
+  private def makeProgram(cfg: SqsConfig): ZIO[Has[Sqs] with Has[Clock] with Has[Console], Throwable, Unit] =
     cfg.destination.fold(
       dstQueueName => makeQueueMoveProgram(cfg.srcQueueName, dstQueueName),
       dstDir => makeDirMoveProgram(cfg.srcQueueName, dstDir)
     )
 
-  private def makeQueueMoveProgram(srcQueueName: String, dstQueueName: String): ZIO[Sqs with Has[Clock] with Has[Console], Throwable, Unit] =
+  private def makeQueueMoveProgram(srcQueueName: String, dstQueueName: String): ZIO[Has[Sqs] with Has[Clock] with Has[Console], Throwable, Unit] =
     for
       srcQueueUrl <- getQueueUrl(srcQueueName)
       dstQueueUrl <- getQueueUrl(dstQueueName)
@@ -44,7 +45,7 @@ object SqsMove extends ZIOAppDefault:
       _           <- move(srcQueueUrl, dstQueueUrl)
     yield ()
 
-  private def makeDirMoveProgram(srcQueueName: String, dstDir: File): ZIO[Sqs with Has[Clock] with Has[Console], Throwable, Unit] =
+  private def makeDirMoveProgram(srcQueueName: String, dstDir: File): ZIO[Has[Sqs] with Has[Clock] with Has[Console], Throwable, Unit] =
     for
       srcQueueUrl <- getQueueUrl(srcQueueName)
       _           <- monitor()
@@ -59,12 +60,12 @@ object SqsMove extends ZIOAppDefault:
       override def errorOnUnknownArgument: Boolean   = false
       override def showUsageOnError: Option[Boolean] = Some(false)
 
-  private def makeEnv(cfg: SqsConfig): ZLayer[Has[Clock], Throwable, Sqs] =
+  private def makeEnv(cfg: SqsConfig): ZLayer[Has[Clock], Throwable, Has[Sqs]] =
     val clockEnv = Clock.any
     val copyEnv = cfg.n match
-      case 0 => Sqs.auto(maxConcurrency = sqsMaxConcurrency, initParallelism = 1)
-      case 1 => Sqs.serial(maxConcurrency = sqsMaxConcurrency)
-      case m => Sqs.parallel(maxConcurrency = sqsMaxConcurrency, parallelism = m)
+      case 0 => AutoSqs.layer(maxConcurrency = sqsMaxConcurrency, initParallelism = 1)
+      case 1 => SerialSqs.layer(maxConcurrency = sqsMaxConcurrency)
+      case m => ParallelSqs.layer(maxConcurrency = sqsMaxConcurrency, parallelism = m)
     val appEnv = clockEnv >>> copyEnv
 
     appEnv

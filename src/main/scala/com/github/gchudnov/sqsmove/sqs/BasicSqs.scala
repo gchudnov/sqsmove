@@ -12,7 +12,7 @@ import scala.jdk.CollectionConverters.*
 /**
  * Basic SQS Functionality
  */
-abstract class BasicSqsMove(maxConcurrency: Int) extends Sqs.Service:
+abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
   import AwsSqs.*
 
   protected val sqsClient: SqsAsyncClient = makeSqsClient(makeHttpClient(maxConcurrency))
@@ -60,7 +60,7 @@ abstract class BasicSqsMove(maxConcurrency: Int) extends Sqs.Service:
           .as(ss.length)
       }
 
-object BasicSqsMove:
+object BasicSqs:
   val metricCounterName: String             = "countMessages"
   val countMessages: ZIOMetric.Counter[Int] = ZIOMetric.countValueWith[Int](metricCounterName)(_.toDouble)
 

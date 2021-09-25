@@ -7,7 +7,7 @@ import java.io.File
 
 import scala.collection.immutable.IndexedSeq
 
-final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, clock: Clock) extends BasicSqsMove(maxConcurrency):
+final class AutoSqs(maxConcurrency: Int, initParallelism: Int, clock: Clock) extends BasicSqs(maxConcurrency):
   import AwsSqs.*
 
   type StopPromise = Promise[Option[Throwable], Unit]
@@ -130,3 +130,9 @@ final class AutoSqsMove(maxConcurrency: Int, initParallelism: Int, clock: Clock)
       s3 = s1.mergeTerminateEither(s2)
       f <- (s3.runDrain *> ZIO.logDebug(s"[$name] done")).fork
     yield f
+
+object AutoSqs:
+  def layer(maxConcurrency: Int, initParallelism: Int): ZLayer[Has[Clock], Throwable, Has[Sqs]] = (for
+    clock  <- ZIO.service[Clock]
+    service = new AutoSqs(maxConcurrency = maxConcurrency, initParallelism = initParallelism, clock = clock)
+  yield service).toLayer

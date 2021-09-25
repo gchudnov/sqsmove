@@ -8,8 +8,8 @@ import java.io.File
 /**
  * Parallel SQS Move
  */
-final class ParallelSqsMove(maxConcurrency: Int, parallelism: Int) extends BasicSqsMove(maxConcurrency):
-  import BasicSqsMove.*
+final class ParallelSqs(maxConcurrency: Int, parallelism: Int) extends BasicSqs(maxConcurrency):
+  import BasicSqs.*
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZStream
@@ -22,3 +22,7 @@ final class ParallelSqsMove(maxConcurrency: Int, parallelism: Int) extends Basic
       .runDrain
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] = ???
+
+object ParallelSqs:
+  def layer(maxConcurrency: Int, parallelism: Int): ZLayer[Any, Throwable, Has[Sqs]] =
+    ZIO.attempt(new ParallelSqs(maxConcurrency = maxConcurrency, parallelism = parallelism)).toLayer
