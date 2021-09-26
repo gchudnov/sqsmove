@@ -1,9 +1,4 @@
-// TODO: downloader - metadata
-   - do not create empty files
-   - quote only string values
-   - encode binary in a proper way
-   - "meta" and headers must be constants
-// TODO: implement downloader
+// TODO: implement downloader | serial, parallel
 // TODO: allow to specify visibility timeout
 // TODO: add --no-delete flag
 // TODO: implement uploader
