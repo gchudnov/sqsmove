@@ -1,0 +1,5 @@
+// TODO: implement downloader
+// TODO: allow to specify visibility timeout
+// TODO: add --no-delete flag
+// TODO: implement uploader
+// TODO: create an intermediate config

@@ -4,7 +4,7 @@ import com.github.gchudnov.sqsmove.sqs.BasicSqs.monitor
 import com.github.gchudnov.sqsmove.sqs.{ AutoSqs, ParallelSqs, SerialSqs, Sqs }
 import com.github.gchudnov.sqsmove.sqs.Sqs.*
 import com.github.gchudnov.sqsmove.zopt.SuccessExitException
-import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.OZEffectSetup
+import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.{ OZEffectSetup, StdioEffectSetup }
 import scopt.{ DefaultOParserSetup, OParserSetup }
 import zio.*
 import zio.Clock
@@ -18,8 +18,8 @@ object SqsMove extends ZIOAppDefault:
   private val sqsMaxConcurrency: Int = 512
 
   override def run: ZIO[Environment with ZEnv with Has[ZIOAppArgs], Any, Any] =
-    val osetup: ZLayer[Has[Console], Throwable, OZEffectSetup] = makeOZEffectSetup()
-    val psetup: OParserSetup                                   = makePEffectSetup()
+    val osetup: ZLayer[Has[Console], Throwable, Has[OZEffectSetup]] = makeOZEffectSetup()
+    val psetup: OParserSetup                                        = makePEffectSetup()
 
     val program = for
       as  <- args
@@ -52,8 +52,8 @@ object SqsMove extends ZIOAppDefault:
       _           <- download(srcQueueUrl, dstDir)
     yield ()
 
-  private def makeOZEffectSetup(): ZLayer[Has[Console], Nothing, OZEffectSetup] =
-    OZEffectSetup.stdio
+  private def makeOZEffectSetup(): ZLayer[Has[Console], Nothing, Has[OZEffectSetup]] =
+    StdioEffectSetup.layer
 
   private def makePEffectSetup(): OParserSetup =
     new DefaultOParserSetup with OParserSetup:

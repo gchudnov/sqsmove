@@ -1,12 +1,27 @@
 package com.github.gchudnov.sqsmove
 
 import com.github.gchudnov.sqsmove.zopt.SuccessExitException
-import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.{ displayToOut, runOEffects, OZEffectSetup }
+import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.OZEffectSetup
 import com.github.gchudnov.sqsmove.BuildInfo as AppBuildInfo
 import scopt.OEffect.ReportError
 import scopt.{ OEffect, OParser, OParserSetup }
 import zio.*
 import java.io.File
+import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.OZEffectSetup.*
+
+/**
+ * Intermediate Arguments used on parsing the input Arguments
+ */
+private final case class SqsArgs(
+  srcQueueName: Option[String],
+  dstQueueName: Option[String],
+  srdDir: Option[File],
+  dstDir: Option[File],
+  parallelism: Int,
+  visibilityTimeout: Int,
+  isNoDelete: Boolean,
+  isVerbose: Boolean
+)
 
 final case class SqsConfig(
   srcQueueName: String,
@@ -80,7 +95,7 @@ object SqsConfig:
   private val OEffectPrefix  = "OEFFECT"
   private val OEffectHelpKey = s"$OEffectPrefix:HELP"
 
-  def fromArgs(args: List[String])(argParserSetup: OParserSetup): RIO[OZEffectSetup, SqsConfig] =
+  def fromArgs(args: List[String])(argParserSetup: OParserSetup): RIO[Has[OZEffectSetup], SqsConfig] =
     OParser.runParser(argsParser, args, SqsConfig.empty, argParserSetup) match
       case (result, effects) =>
         for
@@ -89,7 +104,7 @@ object SqsConfig:
           config   <- ZIO.fromOption(result).orElseFail(new IllegalArgumentException(s"Use --$ArgHelpLong for more information."))
         yield config
 
-  private def preprocessOEffects(effects: List[OEffect]): RIO[OZEffectSetup, List[OEffect]] =
+  private def preprocessOEffects(effects: List[OEffect]): RIO[Has[OZEffectSetup], List[OEffect]] =
     val hasHelp = hasKey(OEffectHelpKey)(effects)
 
     if hasHelp then displayToOut(usage()) *> ZIO.fail(new SuccessExitException())
