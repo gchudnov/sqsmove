@@ -5,9 +5,11 @@ import software.amazon.awssdk.services.sqs.model.{ GetQueueUrlRequest, Message, 
 import zio.*
 import zio.Console.*
 
-import java.io.IOException
+import java.io.{ File, IOException }
 import scala.collection.immutable.IndexedSeq
 import scala.jdk.CollectionConverters.*
+import com.github.gchudnov.sqsmove.files.FileOps
+import java.nio.file.Paths
 
 /**
  * Basic SQS Functionality
@@ -59,6 +61,14 @@ abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
           .when(fs.nonEmpty)(ZIO.logWarning(s"Failed to delete ${fs.size} entries"))
           .as(ss.length)
       }
+
+  protected def saveBatch(dstDir: File, b: IndexedSeq[Message]): ZIO[Any, Throwable, IndexedSeq[ReceiptHandle]] =
+    ZIO.foreach(b)((m) =>
+      (for
+        filePath <- ZIO.attempt(Paths.get(dstDir.getAbsolutePath, m.messageId))
+        _        <- ZIO.fromEither(FileOps.saveString(filePath.toFile, m.body()))
+      yield m.receiptHandle)
+    )
 
 object BasicSqs:
   val metricCounterName: String             = "countMessages"

@@ -17,7 +17,12 @@ final class SerialSqs(maxConcurrency: Int) extends BasicSqs(maxConcurrency):
       .flatMap(b => sendBatch(dstQueueUrl, b).flatMap(b => deleteBatch(srcQueueUrl, b) @@ countMessages).when(b.nonEmpty))
       .forever
 
-  override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] = ???
+  override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] =
+    ZIO
+      .succeed(makeReceiveRequest(srcQueueUrl))
+      .flatMap(r => receiveBatch(r))
+      .flatMap(b => saveBatch(dstDir, b).flatMap(b => deleteBatch(srcQueueUrl, b) @@ countMessages).when(b.nonEmpty))
+      .forever
 
   override def upload(stcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] = ???
 
