@@ -6,7 +6,7 @@ import zio.*
 import java.io.File
 
 /**
- * Series SQS Move
+ * Serial SQS Move
  */
 final class SerialSqs(maxConcurrency: Int) extends BasicSqs(maxConcurrency):
 

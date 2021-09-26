@@ -67,17 +67,25 @@ abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
     ZIO.foreach(b)(m =>
       for
         filePath <- ZIO.attempt(Paths.get(dstDir.getAbsolutePath, m.messageId))
-        _        <- ZIO.fromEither(FileOps.saveString(filePath.toFile, m.body()))
-        _        <- ZIO.fromEither(FileOps.saveString(FileOps.replaceExtension(filePath.toFile, "meta"), CsvOps.asString(toTable(m.messageAttributes.asScala.toMap))))
+        _        <- ZIO.fromEither(FileOps.saveString(filePath.toFile, m.body))
+        meta      = CsvOps.asString(toTable(m.messageAttributes.asScala.toMap))
+        _        <- ZIO.fromEither(FileOps.saveString(FileOps.replaceExtension(filePath.toFile, BasicSqs.extMeta), meta))
       yield m.receiptHandle
     )
 
   private def toTable(m: Map[String, MessageAttributeValue]): List[List[String]] =
-    val header = List("name", "type", "value")
+    import BasicSqs.*
+    val header = List(attrName, attrType, attrValue)
     val lines  = m.map((k, ma) => List(k, ma.dataType, ma.stringValue)).toList
     header :: lines
 
 object BasicSqs:
+  val attrName  = "name"
+  val attrType  = "type"
+  val attrValue = "value"
+
+  val extMeta = "meta"
+
   val metricCounterName: String             = "countMessages"
   val countMessages: ZIOMetric.Counter[Int] = ZIOMetric.countValueWith[Int](metricCounterName)(_.toDouble)
 
