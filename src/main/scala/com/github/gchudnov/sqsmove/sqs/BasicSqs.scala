@@ -64,10 +64,10 @@ abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
 
   protected def saveBatch(dstDir: File, b: IndexedSeq[Message]): ZIO[Any, Throwable, IndexedSeq[ReceiptHandle]] =
     ZIO.foreach(b)((m) =>
-      (for
+      for
         filePath <- ZIO.attempt(Paths.get(dstDir.getAbsolutePath, m.messageId))
         _        <- ZIO.fromEither(FileOps.saveString(filePath.toFile, m.body()))
-      yield m.receiptHandle)
+      yield m.receiptHandle
     )
 
 object BasicSqs:
