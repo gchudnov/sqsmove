@@ -68,8 +68,9 @@ abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
       for
         filePath <- ZIO.attempt(Paths.get(dstDir.getAbsolutePath, m.messageId))
         _        <- ZIO.fromEither(FileOps.saveString(filePath.toFile, m.body))
-        meta      = CsvOps.asString(toTable(m.messageAttributes.asScala.toMap))
-        _        <- ZIO.fromEither(FileOps.saveString(FileOps.replaceExtension(filePath.toFile, BasicSqs.extMeta), meta))
+        attrMap   = m.messageAttributes.asScala.toMap
+        meta      = CsvOps.asString(toTable(attrMap))
+        _        <- ZIO.fromEither(FileOps.saveString(FileOps.replaceExtension(filePath.toFile, BasicSqs.extMeta), meta)).when(attrMap.nonEmpty)
       yield m.receiptHandle
     )
 
