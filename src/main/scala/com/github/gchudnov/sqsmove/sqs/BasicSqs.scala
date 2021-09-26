@@ -1,7 +1,7 @@
 package com.github.gchudnov.sqsmove.sqs
 
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model.{ GetQueueUrlRequest, Message, ReceiveMessageRequest }
+import software.amazon.awssdk.services.sqs.model.{ GetQueueUrlRequest, Message, MessageAttributeValue, ReceiveMessageRequest }
 import zio.*
 import zio.Console.*
 
@@ -9,6 +9,7 @@ import java.io.{ File, IOException }
 import scala.collection.immutable.IndexedSeq
 import scala.jdk.CollectionConverters.*
 import com.github.gchudnov.sqsmove.files.FileOps
+import com.github.gchudnov.sqsmove.csvs.CsvOps
 import java.nio.file.Paths
 
 /**
@@ -63,12 +64,18 @@ abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
       }
 
   protected def saveBatch(dstDir: File, b: IndexedSeq[Message]): ZIO[Any, Throwable, IndexedSeq[ReceiptHandle]] =
-    ZIO.foreach(b)((m) =>
+    ZIO.foreach(b)(m =>
       for
         filePath <- ZIO.attempt(Paths.get(dstDir.getAbsolutePath, m.messageId))
         _        <- ZIO.fromEither(FileOps.saveString(filePath.toFile, m.body()))
+        _        <- ZIO.fromEither(FileOps.saveString(FileOps.replaceExtension(filePath.toFile, "meta"), CsvOps.asString(toTable(m.messageAttributes.asScala.toMap))))
       yield m.receiptHandle
     )
+
+  private def toTable(m: Map[String, MessageAttributeValue]): List[List[String]] =
+    val header = List("name", "type", "value")
+    val lines  = m.map((k, ma) => List(k, ma.dataType, ma.stringValue)).toList
+    header :: lines
 
 object BasicSqs:
   val metricCounterName: String             = "countMessages"

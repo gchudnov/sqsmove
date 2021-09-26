@@ -30,7 +30,7 @@ object FileOps:
       }
     }
 
-  def changeExtension(file: File, extension: String): File =
+  def replaceExtension(file: File, extension: String): File =
     val filename = {
       val originalFileName = file.getName
       if originalFileName.contains(".") then originalFileName.substring(0, originalFileName.lastIndexOf('.'))
