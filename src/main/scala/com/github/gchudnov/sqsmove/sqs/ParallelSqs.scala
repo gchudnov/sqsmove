@@ -23,6 +23,8 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int) extends BasicSqs(
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] = ???
 
+  override def upload(stcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] = ???
+
 object ParallelSqs:
   def layer(maxConcurrency: Int, parallelism: Int): ZLayer[Any, Throwable, Has[Sqs]] =
     ZIO.attempt(new ParallelSqs(maxConcurrency = maxConcurrency, parallelism = parallelism)).toLayer

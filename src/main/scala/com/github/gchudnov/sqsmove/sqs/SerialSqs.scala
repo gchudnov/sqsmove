@@ -19,6 +19,8 @@ final class SerialSqs(maxConcurrency: Int) extends BasicSqs(maxConcurrency):
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] = ???
 
+  override def upload(stcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] = ???
+
 object SerialSqs:
   def layer(maxConcurrency: Int): ZLayer[Any, Throwable, Has[Sqs]] =
     ZIO.attempt(new SerialSqs(maxConcurrency)).toLayer

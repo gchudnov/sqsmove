@@ -22,6 +22,8 @@ final class AutoSqs(maxConcurrency: Int, initParallelism: Int, clock: Clock) ext
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] = ???
 
+  override def upload(stcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] = ???
+
   private def moveWithAutoTune(srcQueueUrl: String, dstQueueUrl: String): ZIO[Has[Clock], Nothing, Fiber[Nothing, Unit]] =
     val cName = "auto-consumer"
     val pName = "auto-producer"

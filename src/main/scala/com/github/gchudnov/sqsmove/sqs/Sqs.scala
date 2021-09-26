@@ -7,6 +7,7 @@ trait Sqs:
   def getQueueUrl(name: String): ZIO[Any, Throwable, String]
   def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit]
   def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit]
+  def upload(srdDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit]
 
 object Sqs:
   def getQueueUrl(name: String): ZIO[Has[Sqs], Throwable, String] =
@@ -17,3 +18,6 @@ object Sqs:
 
   def download(srcQueueUrl: String, dstDir: File): ZIO[Has[Sqs], Throwable, Unit] =
     ZIO.serviceWith(_.download(srcQueueUrl, dstDir))
+
+  def upload(srcDir: File, dstQueueUrl: String): ZIO[Has[Sqs], Throwable, Unit] =
+    ZIO.serviceWith(_.upload(srcDir, dstQueueUrl))
