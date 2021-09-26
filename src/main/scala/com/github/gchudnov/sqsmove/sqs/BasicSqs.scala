@@ -80,12 +80,11 @@ abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
     val header = List(attrName, attrType, attrValue)
     val lines = m
       .map((k, ma) =>
-        val value = (ma.dataType match
+        val value = ma.dataType match
           case "String" => s"\"${ma.stringValue}\""
           case "Number" => ma.stringValue
           case "Binary" => new String(Base64.getEncoder().encode(ma.binaryValue.asByteArray))
           case _        => sys.error(s"unexpected Message dataType: ${ma.dataType}")
-        )
         List(k, ma.dataType, value)
       )
       .toList
