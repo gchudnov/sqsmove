@@ -8,8 +8,8 @@ import zio.Console.*
 import java.io.{ File, IOException }
 import scala.collection.immutable.IndexedSeq
 import scala.jdk.CollectionConverters.*
-import com.github.gchudnov.sqsmove.files.FileOps
-import com.github.gchudnov.sqsmove.csvs.CsvOps
+import com.github.gchudnov.sqsmove.util.FileOps
+import com.github.gchudnov.sqsmove.util.CsvOps
 import java.nio.file.Paths
 import java.util.Base64
 

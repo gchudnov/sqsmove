@@ -8,6 +8,7 @@ import scopt.{ OEffect, OParser, OParserSetup }
 import zio.*
 import java.io.File
 import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.OZEffectSetup.*
+import com.github.gchudnov.sqsmove.util.DurationOps
 
 /**
  * Intermediate Arguments used on parsing the input Arguments
@@ -18,7 +19,7 @@ final case class SqsArgs(
   srcDir: Option[File],
   dstDir: Option[File],
   parallelism: Int,
-  visibilityTimeout: Duration,
+  visibilityTimeout: String,
   isNoDelete: Boolean,
   isVerbose: Boolean
 )
@@ -26,7 +27,7 @@ final case class SqsArgs(
 object SqsArgs:
 
   val DefaultParallelism       = 16
-  val DefaultVisibilityTimeout = 30.seconds
+  val DefaultVisibilityTimeout = "30s" // 30 seconds
   val DefaultNoDelete          = false
   val DefaultVerbose           = false
 
@@ -99,11 +100,11 @@ object SqsConfig:
         .validate(n => if n >= 0 then Right(()) else Left(s"$ArgParallelismLong cannot be negative"))
         .action((x, c) => c.copy(parallelism = x))
         .text(s"parallelism (default: ${SqsArgs.DefaultParallelism})"),
-      opt[Int](ArgVisibilityTimeoutLong)
+      opt[String](ArgVisibilityTimeoutLong)
         .optional()
         .valueName("<value>")
-        .validate(n => if n >= 0 then Right(()) else Left(s"$ArgVisibilityTimeoutLong cannot be negative"))
-        .action((x, c) => c.copy(parallelism = x))
+        .validate(x => DurationOps.ensure(x).left.map(_.getMessage))
+        .action((x, c) => c.copy(visibilityTimeout = x))
         .text(s"visibility timeout (default: ${SqsArgs.DefaultVisibilityTimeout})"),
       opt[Unit](ArgNoDeleteLong)
         .optional()
@@ -136,13 +137,14 @@ object SqsConfig:
           _        <- runOEffects(pEffects)
           aConfig  <- ZIO.fromOption(result).orElseFail(new IllegalArgumentException(s"Use --$ArgHelpLong for more information."))
           config <- (for
-                      source      <- queueOrDir(aConfig.srcQueueName, aConfig.srcDir)("source")
-                      destination <- queueOrDir(aConfig.dstQueueName, aConfig.dstDir)("destination")
+                      source            <- queueOrDir(aConfig.srcQueueName, aConfig.srcDir)("source")
+                      destination       <- queueOrDir(aConfig.dstQueueName, aConfig.dstDir)("destination")
+                      visibilityTimeout <- ZIO.fromEither(DurationOps.parse(aConfig.visibilityTimeout))
                     yield SqsConfig(
                       source = source,
                       destination = destination,
                       parallelism = aConfig.parallelism,
-                      visibilityTimeout = aConfig.visibilityTimeout,
+                      visibilityTimeout = visibilityTimeout,
                       isNoDelete = aConfig.isNoDelete,
                       isVerbose = aConfig.isVerbose
                     ))

@@ -1,4 +1,8 @@
-// TODO: implement downloader | serial, parallel
+// TODO: create a function to encode / decode base64 to sdk bytes
+// TODO: print and parse duration (30s, 10m, 1h, 12d) + tests
 // TODO: allow to specify visibility timeout
+// TODO: implement downloader | serial, parallel
 // TODO: add --no-delete flag
 // TODO: implement uploader
+
+// TODO: check ZIO migration guild: https://github.com/zio/zio/pull/5381/files

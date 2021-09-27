@@ -1,4 +1,4 @@
-package com.github.gchudnov.sqsmove.csvs
+package com.github.gchudnov.sqsmove.util
 
 object CsvOps:
 

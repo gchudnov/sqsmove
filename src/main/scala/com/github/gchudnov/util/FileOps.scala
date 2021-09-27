@@ -1,4 +1,4 @@
-package com.github.gchudnov.sqsmove.files
+package com.github.gchudnov.sqsmove.util
 
 import java.io.File
 import java.io.{ BufferedWriter, File, FileOutputStream, FileWriter }
