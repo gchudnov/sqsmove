@@ -72,9 +72,9 @@ object SqsMove extends ZIOAppDefault:
   private def makeEnv(cfg: SqsConfig): ZLayer[Has[Clock], Throwable, Has[Sqs]] =
     val clockEnv = Clock.any
     val copyEnv = cfg.parallelism match
-      case 0 => AutoSqs.layer(maxConcurrency = sqsMaxConcurrency, initParallelism = 1, visibilityTimeout = cfg.visibilityTimeout)
-      case 1 => SerialSqs.layer(maxConcurrency = sqsMaxConcurrency, visibilityTimeout = cfg.visibilityTimeout)
-      case m => ParallelSqs.layer(maxConcurrency = sqsMaxConcurrency, parallelism = m, visibilityTimeout = cfg.visibilityTimeout)
+      case 0 => AutoSqs.layer(maxConcurrency = sqsMaxConcurrency, initParallelism = 1, visibilityTimeout = cfg.visibilityTimeout, isNoDelete = cfg.isNoDelete)
+      case 1 => SerialSqs.layer(maxConcurrency = sqsMaxConcurrency, visibilityTimeout = cfg.visibilityTimeout, isNoDelete = cfg.isNoDelete)
+      case m => ParallelSqs.layer(maxConcurrency = sqsMaxConcurrency, parallelism = m, visibilityTimeout = cfg.visibilityTimeout, isNoDelete = cfg.isNoDelete)
     val appEnv = clockEnv >>> copyEnv
 
     appEnv

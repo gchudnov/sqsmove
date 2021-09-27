@@ -67,6 +67,7 @@ object SqsConfig:
   private val ArgNoDeleteLong          = "no-delete"
   private val ArgVerboseShort          = 'v'
   private val ArgVerboseLong           = "verbose"
+  private val ArgVersionLong           = "version"
 
   private val argsBuilder = OParser.builder[SqsArgs]
   private val argsParser =
@@ -105,10 +106,10 @@ object SqsConfig:
         .valueName("<value>")
         .validate(x => DurationOps.ensure(x).left.map(_.getMessage))
         .action((x, c) => c.copy(visibilityTimeout = x))
-        .text(s"visibility timeout (default: ${SqsArgs.DefaultVisibilityTimeout}). Specified as a string, e.g. 1d12h35m16s"),
+        .text(s"visibility timeout (default: ${SqsArgs.DefaultVisibilityTimeout}). Format: 1d12h35m16s"),
       opt[Unit](ArgNoDeleteLong)
         .optional()
-        .text("do not delete message after processing")
+        .text("do not delete messages after processing")
         .action((_, c) => c.copy(isNoDelete = true)),
       opt[Unit](ArgVerboseShort, ArgVerboseLong)
         .optional()
@@ -118,6 +119,10 @@ object SqsConfig:
         .optional()
         .text("prints this usage text")
         .validate(_ => Left(OEffectHelpKey)),
+      opt[Unit](ArgVersionLong)
+        .optional()
+        .text("prints the version")
+        .validate(_ => Left(OEffectVersionKey)),
       checkConfig(c =>
         for
           _ <- validateQueueOrDir(c.srcQueueName, c.srcDir)(List(ArgSrcQueueShort.toString, ArgSrcQueueLong), List(ArgSrcDirLong))
@@ -126,8 +131,9 @@ object SqsConfig:
       )
     )
 
-  private val OEffectPrefix  = "OEFFECT"
-  private val OEffectHelpKey = s"$OEffectPrefix:HELP"
+  private val OEffectPrefix     = "OEFFECT"
+  private val OEffectHelpKey    = s"$OEffectPrefix:HELP"
+  private val OEffectVersionKey = s"$OEffectPrefix:VERSION"
 
   def fromArgs(args: List[String])(argParserSetup: OParserSetup): RIO[Has[OZEffectSetup], SqsConfig] =
     OParser.runParser(argsParser, args, SqsArgs.empty, argParserSetup) match
@@ -151,9 +157,11 @@ object SqsConfig:
         yield config
 
   private def preprocessOEffects(effects: List[OEffect]): RIO[Has[OZEffectSetup], List[OEffect]] =
-    val hasHelp = hasKey(OEffectHelpKey)(effects)
+    val hasHelp    = hasKey(OEffectHelpKey)(effects)
+    val hasVersion = hasKey(OEffectVersionKey)(effects)
 
     if hasHelp then displayToOut(usage()) *> ZIO.fail(new SuccessExitException())
+    else if hasVersion then displayToOut(version()) *> ZIO.fail(new SuccessExitException())
     else ZIO(effects.filterNot(it => it.isInstanceOf[ReportError] && it.asInstanceOf[ReportError].msg.startsWith(OEffectPrefix)))
 
   private def hasKey(key: String)(effects: List[OEffect]): Boolean =
@@ -164,6 +172,9 @@ object SqsConfig:
 
   def usage(): String =
     OParser.usage(argsParser)
+
+  def version(): String =
+    s"${AppBuildInfo.name} ${AppBuildInfo.version}"
 
   def validateQueueOrDir(queueName: Option[String], dir: Option[File])(queueArgs: List[String], dirArgs: List[String]): Either[String, Unit] =
     (queueName, dir) match
