@@ -8,7 +8,7 @@ import java.io.File
 /**
  * Parallel SQS Move
  */
-final class ParallelSqs(maxConcurrency: Int, parallelism: Int) extends BasicSqs(maxConcurrency):
+final class ParallelSqs(maxConcurrency: Int, parallelism: Int, visibilityTimeout: Duration) extends BasicSqs(maxConcurrency):
   import BasicSqs.*
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
@@ -26,5 +26,5 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int) extends BasicSqs(
   override def upload(stcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] = ???
 
 object ParallelSqs:
-  def layer(maxConcurrency: Int, parallelism: Int): ZLayer[Any, Throwable, Has[Sqs]] =
-    ZIO.attempt(new ParallelSqs(maxConcurrency = maxConcurrency, parallelism = parallelism)).toLayer
+  def layer(maxConcurrency: Int, parallelism: Int, visibilityTimeout: Duration): ZLayer[Any, Throwable, Has[Sqs]] =
+    ZIO.attempt(new ParallelSqs(maxConcurrency = maxConcurrency, parallelism = parallelism, visibilityTimeout = visibilityTimeout)).toLayer

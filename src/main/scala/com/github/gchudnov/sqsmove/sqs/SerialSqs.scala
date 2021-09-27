@@ -8,7 +8,7 @@ import java.io.File
 /**
  * Serial SQS Move
  */
-final class SerialSqs(maxConcurrency: Int) extends BasicSqs(maxConcurrency):
+final class SerialSqs(maxConcurrency: Int, visibilityTimeout: Duration) extends BasicSqs(maxConcurrency):
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZIO
@@ -27,5 +27,5 @@ final class SerialSqs(maxConcurrency: Int) extends BasicSqs(maxConcurrency):
   override def upload(stcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] = ???
 
 object SerialSqs:
-  def layer(maxConcurrency: Int): ZLayer[Any, Throwable, Has[Sqs]] =
-    ZIO.attempt(new SerialSqs(maxConcurrency)).toLayer
+  def layer(maxConcurrency: Int, visibilityTimeout: Duration): ZLayer[Any, Throwable, Has[Sqs]] =
+    ZIO.attempt(new SerialSqs(maxConcurrency = maxConcurrency, visibilityTimeout = visibilityTimeout)).toLayer
