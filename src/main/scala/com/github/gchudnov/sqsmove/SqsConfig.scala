@@ -105,7 +105,7 @@ object SqsConfig:
         .valueName("<value>")
         .validate(x => DurationOps.ensure(x).left.map(_.getMessage))
         .action((x, c) => c.copy(visibilityTimeout = x))
-        .text(s"visibility timeout (default: ${SqsArgs.DefaultVisibilityTimeout})"),
+        .text(s"visibility timeout (default: ${SqsArgs.DefaultVisibilityTimeout}). Specified as a string, e.g. 1d12h35m16s"),
       opt[Unit](ArgNoDeleteLong)
         .optional()
         .text("do not delete message after processing")

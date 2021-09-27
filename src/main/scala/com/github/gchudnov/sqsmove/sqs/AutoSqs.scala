@@ -41,7 +41,9 @@ final class AutoSqs(maxConcurrency: Int, initParallelism: Int, visibilityTimeout
       psRef <- ZRef.make(List.empty[StopPromise]) // active producers
       dsRef <- ZRef.make(List.empty[StopPromise]) // active deleters
 
-      f0 <- scaleWorkers(cName, cRef, csRef)(newConsumer(cName, csRef)(messages, receiveBatch(makeReceiveRequest(srcQueueUrl))))
+      f0 <- scaleWorkers(cName, cRef, csRef)(
+              newConsumer(cName, csRef)(messages, receiveBatch(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds)))
+            )
               .schedule(Schedule.spaced(autoUpdateTime))
               .unit
               .fork

@@ -13,7 +13,7 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int, visibilityTimeout
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZStream
-      .repeat(makeReceiveRequest(srcQueueUrl))
+      .repeat(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds))
       .mapZIOPar(parallelism)(r => receiveBatch(r))
       .filter(_.nonEmpty)
       .mapZIOPar(parallelism)(b => sendBatch(dstQueueUrl, b))

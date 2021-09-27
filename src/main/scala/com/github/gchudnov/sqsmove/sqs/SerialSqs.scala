@@ -12,14 +12,14 @@ final class SerialSqs(maxConcurrency: Int, visibilityTimeout: Duration) extends 
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZIO
-      .succeed(makeReceiveRequest(srcQueueUrl))
+      .succeed(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds))
       .flatMap(r => receiveBatch(r))
       .flatMap(b => sendBatch(dstQueueUrl, b).flatMap(b => deleteBatch(srcQueueUrl, b) @@ countMessages).when(b.nonEmpty))
       .forever
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] =
     ZIO
-      .succeed(makeReceiveRequest(srcQueueUrl))
+      .succeed(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds))
       .flatMap(r => receiveBatch(r))
       .flatMap(b => saveBatch(dstDir, b).flatMap(b => deleteBatch(srcQueueUrl, b) @@ countMessages).when(b.nonEmpty))
       .forever

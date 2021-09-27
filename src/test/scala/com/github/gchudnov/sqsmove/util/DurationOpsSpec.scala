@@ -42,5 +42,11 @@ object DurationOpsSpec extends DefaultRunnableSpec:
       val input         = "1x"
       val errOrDuration = parse(input)
       assert(errOrDuration.isLeft)(equalTo(true))
+    },
+    test("duration can ve converted to seconds") {
+      val d        = (Duration(1, TimeUnit.DAYS) + Duration(12, TimeUnit.HOURS) + Duration(30, TimeUnit.MINUTES) + Duration(5, TimeUnit.SECONDS))
+      val expected = 131405
+      val actual   = d.getSeconds
+      assert(actual)(equalTo(expected))
     }
   )

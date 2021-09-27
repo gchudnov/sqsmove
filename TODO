@@ -1,5 +1,4 @@
 // TODO: create a function to encode / decode base64 to sdk bytes
-// TODO: allow to specify visibility timeout
 // TODO: implement downloader | serial, parallel
 // TODO: add --no-delete flag
 // TODO: implement uploader
