@@ -160,8 +160,15 @@ object SqsConfig:
     val hasHelp    = hasKey(OEffectHelpKey)(effects)
     val hasVersion = hasKey(OEffectVersionKey)(effects)
 
-    if hasHelp then displayToOut(usage()) *> ZIO.fail(new SuccessExitException())
-    else if hasVersion then displayToOut(version()) *> ZIO.fail(new SuccessExitException())
+    if hasHelp || hasVersion then
+      val value = (hasHelp, hasVersion) match
+        case (true, _) =>
+          usage()
+        case (false, true) =>
+          version()
+        case (_, _) =>
+          ""
+      displayToOut(value) *> ZIO.fail(new SuccessExitException())
     else ZIO(effects.filterNot(it => it.isInstanceOf[ReportError] && it.asInstanceOf[ReportError].msg.startsWith(OEffectPrefix)))
 
   private def hasKey(key: String)(effects: List[OEffect]): Boolean =
