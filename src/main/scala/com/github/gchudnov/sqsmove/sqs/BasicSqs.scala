@@ -2,6 +2,7 @@ package com.github.gchudnov.sqsmove.sqs
 
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{ GetQueueUrlRequest, Message, MessageAttributeValue, ReceiveMessageRequest }
+import software.amazon.awssdk.core.SdkBytes
 import zio.*
 import zio.Console.*
 
@@ -12,7 +13,6 @@ import com.github.gchudnov.sqsmove.util.FileOps
 import com.github.gchudnov.sqsmove.util.CsvOps
 import com.github.gchudnov.sqsmove.util.ArrayOps
 import java.nio.file.Paths
-import software.amazon.awssdk.core.SdkBytes
 
 /**
  * Basic SQS Functionality
@@ -105,7 +105,7 @@ object BasicSqs:
       f    <- iteration(mRef).repeat(schedulePolicy).fork
     yield f
 
-  private def toTable(m: Map[String, MessageAttributeValue]): List[List[String]] =
+  private[sqs] def toTable(m: Map[String, MessageAttributeValue]): List[List[String]] =
     import BasicSqs.*
     val header = List(attrName, attrType, attrValue)
     val lines = m
