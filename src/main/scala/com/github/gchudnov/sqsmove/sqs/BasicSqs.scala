@@ -10,8 +10,8 @@ import scala.collection.immutable.IndexedSeq
 import scala.jdk.CollectionConverters.*
 import com.github.gchudnov.sqsmove.util.FileOps
 import com.github.gchudnov.sqsmove.util.CsvOps
+import com.github.gchudnov.sqsmove.util.ArrayOps
 import java.nio.file.Paths
-import java.util.Base64
 import software.amazon.awssdk.core.SdkBytes
 
 /**
@@ -113,12 +113,9 @@ object BasicSqs:
         val value = ma.dataType match
           case "String" => s"\"${ma.stringValue}\""
           case "Number" => ma.stringValue
-          case "Binary" => bytesToBase64(ma.binaryValue)
+          case "Binary" => ArrayOps.bytesToBase64(ma.binaryValue.asByteArray)
           case _        => sys.error(s"unexpected Message dataType: ${ma.dataType}")
         List(k, ma.dataType, value)
       )
       .toList
     header :: lines
-
-  private def bytesToBase64(value: SdkBytes): String =
-    new String(Base64.getEncoder().encode(value.asByteArray))
