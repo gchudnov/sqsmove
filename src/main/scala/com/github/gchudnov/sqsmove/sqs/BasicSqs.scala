@@ -12,12 +12,14 @@ import com.github.gchudnov.sqsmove.util.FileOps
 import com.github.gchudnov.sqsmove.util.CsvOps
 import java.nio.file.Paths
 import java.util.Base64
+import software.amazon.awssdk.core.SdkBytes
 
 /**
  * Basic SQS Functionality
  */
 abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
   import AwsSqs.*
+  import BasicSqs.*
 
   protected val sqsClient: SqsAsyncClient = makeSqsClient(makeHttpClient(maxConcurrency))
 
@@ -75,21 +77,6 @@ abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
       yield m.receiptHandle
     )
 
-  private def toTable(m: Map[String, MessageAttributeValue]): List[List[String]] =
-    import BasicSqs.*
-    val header = List(attrName, attrType, attrValue)
-    val lines = m
-      .map((k, ma) =>
-        val value = ma.dataType match
-          case "String" => s"\"${ma.stringValue}\""
-          case "Number" => ma.stringValue
-          case "Binary" => new String(Base64.getEncoder().encode(ma.binaryValue.asByteArray))
-          case _        => sys.error(s"unexpected Message dataType: ${ma.dataType}")
-        List(k, ma.dataType, value)
-      )
-      .toList
-    header :: lines
-
 object BasicSqs:
   val attrName  = "name"
   val attrType  = "type"
@@ -117,3 +104,21 @@ object BasicSqs:
       mRef <- ZRef.make(0.0)
       f    <- iteration(mRef).repeat(schedulePolicy).fork
     yield f
+
+  private def toTable(m: Map[String, MessageAttributeValue]): List[List[String]] =
+    import BasicSqs.*
+    val header = List(attrName, attrType, attrValue)
+    val lines = m
+      .map((k, ma) =>
+        val value = ma.dataType match
+          case "String" => s"\"${ma.stringValue}\""
+          case "Number" => ma.stringValue
+          case "Binary" => bytesToBase64(ma.binaryValue)
+          case _        => sys.error(s"unexpected Message dataType: ${ma.dataType}")
+        List(k, ma.dataType, value)
+      )
+      .toList
+    header :: lines
+
+  private def bytesToBase64(value: SdkBytes): String =
+    new String(Base64.getEncoder().encode(value.asByteArray))
