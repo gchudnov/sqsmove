@@ -13,6 +13,7 @@ import com.github.gchudnov.sqsmove.util.FileOps
 import com.github.gchudnov.sqsmove.util.CsvOps
 import com.github.gchudnov.sqsmove.util.ArrayOps
 import java.nio.file.Paths
+import scala.util.control.Exception.*
 
 /**
  * Basic SQS Functionality
@@ -119,3 +120,38 @@ object BasicSqs:
       )
       .toList
     header :: lines
+
+  private[sqs] def fromTable(t: List[List[String]]): Either[Throwable, Map[String, MessageAttributeValue]] =
+    if t.isEmpty then Right[Throwable, Map[String, MessageAttributeValue]](Map.empty[String, MessageAttributeValue])
+    else
+      val header :: tail = t
+      for
+        attrNameIdx  <- findColumnIndex(header, attrName)
+        attrTypeIdx  <- findColumnIndex(header, attrType)
+        attrValueIdx <- findColumnIndex(header, attrValue)
+        m <- allCatch.either(
+               tail
+                 .map((row) =>
+                   val colName  = row(attrNameIdx)
+                   val colType  = row(attrTypeIdx)
+                   val colValue = row(attrValueIdx)
+
+                   val msgAttr = (colType match
+                     case "String" => MessageAttributeValue.builder().stringValue(unquote(colValue)).dataType("String").build()
+                     case "Number" => MessageAttributeValue.builder().stringValue(colValue).dataType("Number").build()
+                     case "Binary" => MessageAttributeValue.builder().binaryValue(SdkBytes.fromUtf8String(colValue)).dataType("Binary").build()
+                   )
+
+                   (colName, msgAttr)
+                 )
+                 .toMap
+             )
+      yield m
+
+  private def findColumnIndex(header: List[String], name: String): Either[Throwable, Int] =
+    val n = header.indexOf(name, 0)
+    if n != -1 then Right(n)
+    else Left(new IllegalArgumentException(s"${name} not found in metadata table"))
+
+  private def unquote(s: String): String =
+    s.replaceAll("^\"|\"$", "")
