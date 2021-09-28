@@ -18,10 +18,18 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int, visibilityTimeout
       .filter(_.nonEmpty)
       .mapZIOPar(parallelism)(b => sendBatch(dstQueueUrl, b))
       .filter(_.nonEmpty)
-      .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b) @@ countMessages).unit)
+      .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b).when(!isNoDelete).as(b.size) @@ countMessages).unit)
       .runDrain
 
-  override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] = ???
+  override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] =
+    ZStream
+      .repeat(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds))
+      .mapZIOPar(parallelism)(r => receiveBatch(r))
+      .filter(_.nonEmpty)
+      .mapZIOPar(parallelism)(b => saveBatch(dstDir, b))
+      .filter(_.nonEmpty)
+      .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b).when(!isNoDelete).as(b.size) @@ countMessages).unit)
+      .runDrain
 
   override def upload(stcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] = ???
 
