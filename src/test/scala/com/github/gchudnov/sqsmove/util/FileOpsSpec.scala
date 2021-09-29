@@ -4,6 +4,7 @@ import zio.test.Assertion.*
 import zio.test.*
 import zio.*
 import com.github.gchudnov.sqsmove.util.FileOps.*
+import com.github.gchudnov.sqsmove.util.DirOps
 import java.io.File
 
 object FileOpsSpec extends DefaultRunnableSpec:
@@ -24,20 +25,19 @@ object FileOpsSpec extends DefaultRunnableSpec:
       val actual = replaceExtension(input, newExt)
       assert(actual)(equalTo(expected))
     },
-    test("file can be saved to a directory") {
-      // TODO: implement it!
-      ???
-      // val input    = "QUJD"
-      // val expected = "ABC"
+    test("file can be saved to a directory and read after that") {
+      val fn   = "save-file-test"
+      val data = "  123  \n  456\t"
 
-      // val actual = base64ToBytes(input).map(new String(_))
-      // assert(actual)(equalTo(Right(expected)))
-    },
-    // test("when an invalid base64 string is decoded, return an error") {
-    //   val input    = "1"
-    //   val expected = "ABC"
+      val actual = for
+        d    <- DirOps.newTmpDir("file-ops-test")
+        f     = new File(d, fn)
+        _    <- saveString(f, data)
+        text <- readAll(f)
+      yield text
 
-    //   val actual = base64ToBytes(input)
-    //   assert(actual.isLeft)(equalTo(true))
-    // }
+      val expected = data
+
+      assert(actual)(equalTo(Right(expected)))
+    }
   )

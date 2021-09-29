@@ -14,6 +14,11 @@ object DirOps:
       Files.createDirectory(dir).toFile
     }
 
+  def newTmpDir(prefix: String): Either[Throwable, File] =
+    allCatch.either {
+      Files.createTempDirectory(prefix).toFile
+    }
+
   def listFilesBy(dir: File, predicate: (File) => Boolean): Either[Throwable, List[File]] =
     allCatch.either {
       dir.listFiles

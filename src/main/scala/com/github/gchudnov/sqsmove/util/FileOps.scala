@@ -14,7 +14,7 @@ object FileOps:
   def readAll(file: File): Either[Throwable, String] =
     allCatch.either {
       Using.resource(Source.fromFile(file)) { file =>
-        file.getLines().mkString("\n").trim()
+        file.mkString
       }
     }
 
