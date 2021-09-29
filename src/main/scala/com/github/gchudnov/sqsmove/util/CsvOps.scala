@@ -12,12 +12,12 @@ object CsvOps:
   implicit object platformFormat extends DefaultCSVFormat:
     override val lineTerminator = sys.props("line.separator")
 
-  def csvToString(t: List[List[String]]): String =
+  def tableToString(t: List[List[String]]): String =
     val os     = new ByteArrayOutputStream()
     val writer = CSVWriter.open(os)
     val res    = writer.writeAll(t)
     os.toString(StandardCharsets.UTF_8)
 
-  def csvFromString(s: String): Either[Throwable, List[List[String]]] =
+  def tableFromString(s: String): Either[Throwable, List[List[String]]] =
     val reader = CSVReader.open(SSource.fromString(s))
     allCatch.either(reader.all())

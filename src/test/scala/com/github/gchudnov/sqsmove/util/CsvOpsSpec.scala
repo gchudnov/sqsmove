@@ -14,7 +14,7 @@ object CsvOpsSpec extends DefaultRunnableSpec:
         List("numAttr", "Number", "1"),
         List("binAttr", "Binary", "QUJD")
       )
-      val actual = CsvOps.csvToString(t)
+      val actual = CsvOps.tableToString(t)
       val expected = """name,type,value
                        |strAttr,String,str
                        |numAttr,Number,1
@@ -28,7 +28,7 @@ object CsvOpsSpec extends DefaultRunnableSpec:
         List("name", "type", "value"),
         List("strAttr", "String", "{ \"k1: \"v1\", \"k2: \"v2\" }")
       )
-      val actual = CsvOps.csvToString(t)
+      val actual = CsvOps.tableToString(t)
       val expected = """name,type,value
                        |strAttr,String,"{ ""k1: ""v1"", ""k2: ""v2"" }"
                        |""".stripMargin
@@ -42,7 +42,7 @@ object CsvOpsSpec extends DefaultRunnableSpec:
                    |binAttr,Binary,QUJD
                    |""".stripMargin
 
-      val actual   = CsvOps.csvFromString(data)
+      val actual   = CsvOps.tableFromString(data)
       val expected = List(List("name", "type", "value"), List("strAttr", "String", "str"), List("numAttr", "Number", "1"), List("binAttr", "Binary", "QUJD"))
 
       assert(actual)(equalTo(Right(expected)))
