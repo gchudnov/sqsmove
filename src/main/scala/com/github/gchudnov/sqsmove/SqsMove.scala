@@ -5,6 +5,7 @@ import com.github.gchudnov.sqsmove.sqs.{ AutoSqs, ParallelSqs, SerialSqs, Sqs }
 import com.github.gchudnov.sqsmove.sqs.Sqs.*
 import com.github.gchudnov.sqsmove.zopt.SuccessExitException
 import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.{ OZEffectSetup, StdioEffectSetup }
+import com.github.gchudnov.sqsmove.util.DurationOps
 import scopt.{ DefaultOParserSetup, OParserSetup }
 import zio.*
 import zio.Clock
@@ -26,6 +27,7 @@ object SqsMove extends ZIOAppDefault:
       as  <- args
       cfg <- SqsConfig.fromArgs(as.toList)(psetup).provideSomeLayer[Has[Console]](osetup)
       env  = makeEnv(cfg)
+      _   <- ask(cfg)
       _   <- makeProgram(cfg).provideSomeLayer[Has[Clock] with Has[Console]](env)
     yield ()
 
@@ -37,7 +39,7 @@ object SqsMove extends ZIOAppDefault:
       case (Left(x), Left(y))   => makeMoveProgram(x, y)
       case (Left(x), Right(y))  => makeDownloadProgram(x, y)
       case (Right(x), Left(y))  => makeUploadProgram(x, y)
-      case (Right(x), Right(y)) => ZIO.fail(new RuntimeException("Please use copy to move files between directories."))
+      case (Right(x), Right(y)) => ZIO.fail(new RuntimeException("Cannot move files between directories. Use 'mv' command instead."))
 
   private def makeMoveProgram(srcQueueName: String, dstQueueName: String): ZIO[Has[Sqs] with Has[Clock] with Has[Console], Throwable, Unit] =
     for
@@ -79,3 +81,16 @@ object SqsMove extends ZIOAppDefault:
     val appEnv = clockEnv >>> copyEnv
 
     appEnv
+
+  private def ask(cfg: SqsConfig): ZIO[Has[Console], Throwable, Unit] =
+    val action      = if cfg.isNoDelete then "copy" else "move"
+    val source      = cfg.source.fold(identity, _.toString)
+    val destination = cfg.source.fold(identity, _.toString)
+    val msg = s"""Going to ${action} messages '${source}' -> '${destination}'
+                 |[parallelism: ${cfg.parallelism}; visibility-timeout = ${DurationOps.asString(cfg.visibilityTimeout)}; no-delete: ${cfg.isNoDelete}]
+                 |Are you sure? (y|N)
+                 |"""
+    for
+      ans <- readLine
+      _   <- ZIO.cond(ans == "y", (), new RuntimeException("Aborted"))
+    yield ()

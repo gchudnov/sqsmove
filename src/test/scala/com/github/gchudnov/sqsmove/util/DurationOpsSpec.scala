@@ -48,5 +48,11 @@ object DurationOpsSpec extends DefaultRunnableSpec:
       val expected = 131405
       val actual   = d.getSeconds
       assert(actual)(equalTo(expected))
+    },
+    test("duration can be converted to a string") {
+      val d        = (Duration(1, TimeUnit.DAYS) + Duration(12, TimeUnit.HOURS) + Duration(30, TimeUnit.MINUTES) + Duration(5, TimeUnit.SECONDS))
+      val expected = "1d12h30m5s"
+      val actual   = asString(d)
+      assert(actual)(equalTo(expected))
     }
   )
