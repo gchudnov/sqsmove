@@ -91,6 +91,7 @@ object SqsMove extends ZIOAppDefault:
                  |Are you sure? (y|N)
                  |"""
     for
+      _   <- printLine(msg)
       ans <- readLine
       _   <- ZIO.cond(ans == "y", (), new RuntimeException("Aborted"))
     yield ()
