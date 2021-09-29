@@ -152,4 +152,4 @@ object BasicSqs:
   private def findColumnIndex(header: List[String], name: String): Either[Throwable, Int] =
     val n = header.indexOf(name, 0)
     if n != -1 then Right(n)
-    else Left(new IllegalArgumentException(s"${name} not found in metadata table"))
+    else Left(new IllegalArgumentException(s"Column '${name}' is not found in metadata"))

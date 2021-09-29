@@ -1,7 +1,5 @@
-// TODO: create a function to encode / decode base64 to sdk bytes
-
 // TODO: implement uploader | serial, parallel, auto=stub
 
-// TODO: check ZIO migration guild: https://github.com/zio/zio/pull/5381/files
-
 // TODO: ask for confirmation before moving messages; add -y option to give auto-confirmation
+
+// TODO: check ZIO migration guild: https://github.com/zio/zio/pull/5381/files
