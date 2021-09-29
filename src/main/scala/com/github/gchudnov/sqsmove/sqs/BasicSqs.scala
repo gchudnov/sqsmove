@@ -73,7 +73,7 @@ abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
         filePath <- ZIO.attempt(Paths.get(dstDir.getAbsolutePath, m.messageId))
         _        <- ZIO.fromEither(FileOps.saveString(filePath.toFile, m.body))
         attrMap   = m.messageAttributes.asScala.toMap
-        meta      = CsvOps.tableToString(toTable(attrMap))
+        meta      = CsvOps.tableToString(attrsToTable(attrMap))
         _        <- ZIO.fromEither(FileOps.saveString(FileOps.replaceExtension(filePath.toFile, BasicSqs.extMeta), meta)).when(attrMap.nonEmpty)
       yield m.receiptHandle
     )
@@ -106,7 +106,7 @@ object BasicSqs:
       f    <- iteration(mRef).repeat(schedulePolicy).fork
     yield f
 
-  private[sqs] def toTable(m: Map[String, MessageAttributeValue]): List[List[String]] =
+  private[sqs] def attrsToTable(m: Map[String, MessageAttributeValue]): List[List[String]] =
     import BasicSqs.*
     val header = List(attrName, attrType, attrValue)
     val lines = m
@@ -121,7 +121,7 @@ object BasicSqs:
       .toList
     header :: lines
 
-  private[sqs] def fromTable(t: List[List[String]]): Either[Throwable, Map[String, MessageAttributeValue]] =
+  private[sqs] def attrsFromTable(t: List[List[String]]): Either[Throwable, Map[String, MessageAttributeValue]] =
     if t.isEmpty then Right[Throwable, Map[String, MessageAttributeValue]](Map.empty[String, MessageAttributeValue])
     else
       val header :: tail = t

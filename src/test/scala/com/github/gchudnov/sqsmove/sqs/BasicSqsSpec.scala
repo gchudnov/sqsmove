@@ -16,7 +16,7 @@ object BasicSqsSpec extends DefaultRunnableSpec:
         "binAttr" -> MessageAttributeValue.builder().binaryValue(SdkBytes.fromUtf8String("ABC")).dataType("Binary").build()
       )
 
-      val actual = toTable(m)
+      val actual = attrsToTable(m)
       val expected = List(
         List("name", "type", "value"),
         List("strAttr", "String", "str"),
@@ -34,7 +34,7 @@ object BasicSqsSpec extends DefaultRunnableSpec:
         List("binAttr", "Binary", "QUJD")
       )
 
-      val errOrActual = fromTable(t)
+      val errOrActual = attrsFromTable(t)
       val expected = Map[String, MessageAttributeValue](
         "strAttr" -> MessageAttributeValue.builder().stringValue("str").dataType("String").build(),
         "numAttr" -> MessageAttributeValue.builder().stringValue("1").dataType("Number").build(),
@@ -46,7 +46,7 @@ object BasicSqsSpec extends DefaultRunnableSpec:
     test("attributes are encoded to the empty map if input is empty") {
       val t = List.empty[List[String]]
 
-      val errOrActual = fromTable(t)
+      val errOrActual = attrsFromTable(t)
       val expected    = Map.empty[String, MessageAttributeValue]
 
       assert(errOrActual)(equalTo(Right(expected)))
