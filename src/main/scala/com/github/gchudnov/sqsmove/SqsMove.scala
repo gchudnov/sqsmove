@@ -90,13 +90,12 @@ object SqsMove extends ZIOAppDefault:
     val source      = cfg.source.fold(identity, _.toString)
     val destination = cfg.destination.fold(identity, _.toString)
     val pMsg        = s"parallelism: ${cfg.parallelism}"
-    val vMsg        = s"visibility-timeout: ${DurationOps.asString(cfg.visibilityTimeout)}"
+    val vMsg        = if isSrcDir then "" else s"visibility-timeout: ${DurationOps.asString(cfg.visibilityTimeout)}"
     val dMsg        = if isSrcDir then "" else s"no-delete: ${cfg.isNoDelete}"
     val paramsMsg   = List(pMsg, vMsg, dMsg).filter(_.nonEmpty).mkString("; ")
     val msg = s"""Going to ${action} messages '${source}' -> '${destination}'
                  |[${paramsMsg}]
-                 |Are you sure? (y|N)
-                 |""".stripMargin
+                 |Are you sure? (y|N)""".stripMargin
     for
       _   <- printLine(msg)
       ans <- readLine
