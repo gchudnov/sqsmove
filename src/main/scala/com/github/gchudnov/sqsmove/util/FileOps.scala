@@ -30,5 +30,5 @@ object FileOps:
       val originalFileName = file.getName
       if originalFileName.contains(".") then originalFileName.substring(0, originalFileName.lastIndexOf('.'))
       else originalFileName
-    val filename = s"${}baseName.${newExt}"
+    val filename = s"${baseName}.${newExt}"
     new File(file.getParentFile, filename)
