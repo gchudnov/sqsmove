@@ -26,10 +26,9 @@ object FileOps:
     }
 
   def replaceExtension(file: File, newExt: String): File =
-    val filename = {
+    val baseName =
       val originalFileName = file.getName
       if originalFileName.contains(".") then originalFileName.substring(0, originalFileName.lastIndexOf('.'))
       else originalFileName
-    } + "." + newExt
-
+    val filename = s"${}baseName.${newExt}"
     new File(file.getParentFile, filename)

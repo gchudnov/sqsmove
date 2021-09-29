@@ -2,8 +2,10 @@ package com.github.gchudnov.sqsmove.sqs
 
 import com.github.gchudnov.sqsmove.sqs.AwsSqs.makeReceiveRequest
 import com.github.gchudnov.sqsmove.sqs.BasicSqs.countMessages
+import com.github.gchudnov.sqsmove.util.DirOps
 import zio.*
 import java.io.File
+
 
 /**
  * Serial SQS Move
@@ -24,7 +26,22 @@ final class SerialSqs(maxConcurrency: Int, visibilityTimeout: Duration, isNoDele
       .flatMap(b => saveBatch(dstDir, b).flatMap(b => deleteBatch(srcQueueUrl, b).when(!isNoDelete).as(b.size) @@ countMessages).when(b.nonEmpty))
       .forever
 
-  override def upload(stcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] = ???
+  override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
+    for {
+      files <- ZIO.fromEither(BasicSqs.listFilesExcludingMetadata(srcDir))
+      chunkedFiles = files.grouped(AwsSqs.receiveMaxNumberOfMessages).toList
+      _ <- ZIO.foreach(chunkedFiles)(chunk => {
+        ZIO.foreach(chunk)(file => {
+          ???
+          for {
+            dm <- BasicSqs.readDataWithMetadata(file)
+            (data, meta) = dm
+            ???
+          } yield ()
+        })
+      })
+    } yield ()
+
 
 // TODO: read dir contents to the queue (without .meta extension)
 // TODO: read data file, read meta if available

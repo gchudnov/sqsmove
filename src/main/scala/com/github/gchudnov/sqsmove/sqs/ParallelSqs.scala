@@ -31,7 +31,7 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int, visibilityTimeout
       .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b).when(!isNoDelete).as(b.size) @@ countMessages).unit)
       .runDrain
 
-  override def upload(stcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] = ???
+  override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] = ???
 
 object ParallelSqs:
   def layer(maxConcurrency: Int, parallelism: Int, visibilityTimeout: Duration, isNoDelete: Boolean): ZLayer[Any, Throwable, Has[Sqs]] =

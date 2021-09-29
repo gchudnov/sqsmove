@@ -13,7 +13,7 @@ object AwsSqs:
   type ReceiptHandle = String
 
   private val receiveAllAttributeNames   = List("All").asJava
-  private val receiveMaxNumberOfMessages = 10
+  private[sqs] val receiveMaxNumberOfMessages = 10
   private val receiveWaitTimeSeconds     = 20
 
   def makeHttpClient(maxConcurrency: Int): SdkAsyncHttpClient =

@@ -12,8 +12,10 @@ import scala.jdk.CollectionConverters.*
 import com.github.gchudnov.sqsmove.util.FileOps
 import com.github.gchudnov.sqsmove.util.CsvOps
 import com.github.gchudnov.sqsmove.util.ArrayOps
+import com.github.gchudnov.sqsmove.util.DirOps
 import java.nio.file.Paths
 import scala.util.control.Exception.*
+import scala.util as ju
 
 /**
  * Basic SQS Functionality
@@ -153,3 +155,28 @@ object BasicSqs:
     val n = header.indexOf(name, 0)
     if n != -1 then Right(n)
     else Left(new IllegalArgumentException(s"Column '${name}' is not found in metadata"))
+
+  /**
+   * List all files in the directory, excluding files ending with `.meta` suffix.
+   */
+  private[sqs] def listFilesExcludingMetadata(dir: File): Either[Throwable, List[File]] =
+    DirOps.listFilesBy(dir, file => !file.getName.endsWith(extMeta))
+
+  /**
+   * Read both data and metadata for the given file
+   */
+  private[sqs] def readDataWithMetadata(file: File): ZIO[Any, Throwable, (String, String)] =
+    val data = ZIO.fromEither(FileOps.readAll(file))
+
+    val metaFile = FileOps.replaceExtension(file, extMeta)
+    val metaData = if metaFile.exists() then ZIO.fromEither(FileOps.readAll(file)) else ZIO.succeed("")
+
+    data.zip(metaData)
+
+  /**
+   * Makes a message from the raw data and metadata
+   */ 
+  private[sqs] def toMessage(data: String, metadata: String): Message = 
+    ???
+
+  // TODO: implement it
