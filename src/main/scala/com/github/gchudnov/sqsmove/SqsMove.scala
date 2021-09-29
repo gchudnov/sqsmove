@@ -83,13 +83,15 @@ object SqsMove extends ZIOAppDefault:
     appEnv
 
   private def ask(cfg: SqsConfig): ZIO[Has[Console], Throwable, Unit] =
-    val action      = if cfg.isNoDelete then "copy" else "move"
+    val isSrcDir   = cfg.source.isRight
+    val isSrcQueue = cfg.source.isLeft
+
+    val action      = if (isSrcDir || (isSrcQueue && cfg.isNoDelete)) then "COPY" else "MOVE"
     val source      = cfg.source.fold(identity, _.toString)
     val destination = cfg.destination.fold(identity, _.toString)
-    val isSrdDir    = cfg.source.isRight
     val pMsg        = s"parallelism: ${cfg.parallelism}"
     val vMsg        = s"visibility-timeout: ${DurationOps.asString(cfg.visibilityTimeout)}"
-    val dMsg        = if isSrdDir then "" else s"no-delete: ${cfg.isNoDelete}"
+    val dMsg        = if isSrcDir then "" else s"no-delete: ${cfg.isNoDelete}"
     val paramsMsg   = List(pMsg, vMsg, dMsg).filter(_.nonEmpty).mkString("; ")
     val msg = s"""Going to ${action} messages '${source}' -> '${destination}'
                  |[${paramsMsg}]
