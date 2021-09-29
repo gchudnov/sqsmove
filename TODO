@@ -1,3 +1,12 @@
-// TODO: add --yes option to give auto-confirmation
+// TODO: add examples of usage: 1) readme 2) help
+
+// TODO: add test for replace extension
+
+// TODO: replace "\n" wih sys....
+// TODO: remove trim --> .mkString("\n").trim()
+
+// TODO: add test for readAll
+
+// TODO: add test for saveString
 
 // TODO: check ZIO migration guild: https://github.com/zio/zio/pull/5381/files
