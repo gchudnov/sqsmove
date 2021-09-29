@@ -1,6 +1,6 @@
 package com.github.gchudnov.sqsmove
 
-import com.github.gchudnov.sqsmove.sqs.BasicSqs.monitor
+import com.github.gchudnov.sqsmove.sqs.BasicSqs.{ monitor, summary }
 import com.github.gchudnov.sqsmove.sqs.{ AutoSqs, ParallelSqs, SerialSqs, Sqs }
 import com.github.gchudnov.sqsmove.sqs.Sqs.*
 import com.github.gchudnov.sqsmove.zopt.SuccessExitException
@@ -59,6 +59,7 @@ object SqsMove extends ZIOAppDefault:
       dstQueueUrl <- getQueueUrl(dstQueueName)
       _           <- monitor()
       _           <- upload(srcDir, dstQueueUrl)
+      _           <- summary()
     yield ()
 
   private def makeOZEffectSetup(): ZLayer[Has[Console], Nothing, Has[OZEffectSetup]] =
