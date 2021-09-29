@@ -11,12 +11,7 @@ import scala.util.control.Exception.*
 
 object FileOps:
 
-  def createDir(dir: Path): Either[Throwable, File] =
-    allCatch.either {
-      Files.createDirectory(dir).toFile
-    }
-
-  def stringFromFile(file: File): Either[Throwable, String] =
+  def readAll(file: File): Either[Throwable, String] =
     allCatch.either {
       Using.resource(Source.fromFile(file)) { file =>
         file.getLines().mkString("\n").trim()
@@ -30,11 +25,11 @@ object FileOps:
       }
     }
 
-  def replaceExtension(file: File, extension: String): File =
+  def replaceExtension(file: File, newExt: String): File =
     val filename = {
       val originalFileName = file.getName
       if originalFileName.contains(".") then originalFileName.substring(0, originalFileName.lastIndexOf('.'))
       else originalFileName
-    } + "." + extension
+    } + "." + newExt
 
     new File(file.getParentFile, filename)

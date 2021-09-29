@@ -26,6 +26,11 @@ final class SerialSqs(maxConcurrency: Int, visibilityTimeout: Duration, isNoDele
 
   override def upload(stcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] = ???
 
+// TODO: read dir contents to the queue (without .meta extension)
+// TODO: read data file, read meta if available
+// TODO: encode data + meta
+// TODO: send it
+
 object SerialSqs:
   def layer(maxConcurrency: Int, visibilityTimeout: Duration, isNoDelete: Boolean): ZLayer[Any, Throwable, Has[Sqs]] =
     ZIO.attempt(new SerialSqs(maxConcurrency = maxConcurrency, visibilityTimeout = visibilityTimeout, isNoDelete = isNoDelete)).toLayer
