@@ -20,16 +20,18 @@ final case class SqsArgs(
   dstDir: Option[File],
   parallelism: Int,
   visibilityTimeout: String,
-  isNoDelete: Boolean,
+  isDelete: Boolean,
+  isAsk: Boolean,
   isVerbose: Boolean
 )
 
 object SqsArgs:
 
-  val DefaultParallelism       = 16
-  val DefaultVisibilityTimeout = "30s" // 30 seconds
-  val DefaultNoDelete          = false
-  val DefaultVerbose           = false
+  private[sqsmove] val DefaultParallelism       = 16
+  private[sqsmove] val DefaultVisibilityTimeout = "30s" // 30 seconds
+  private[sqsmove] val DefaultDelete            = true
+  private[sqsmove] val DefaultAsk               = true
+  private[sqsmove] val DefaultVerbose           = false
 
   def empty: SqsArgs = SqsArgs(
     srcQueueName = None,
@@ -38,7 +40,8 @@ object SqsArgs:
     dstDir = None,
     parallelism = DefaultParallelism,
     visibilityTimeout = DefaultVisibilityTimeout,
-    isNoDelete = DefaultNoDelete,
+    isDelete = DefaultDelete,
+    isAsk = DefaultAsk,
     isVerbose = DefaultVerbose
   )
 
@@ -47,7 +50,8 @@ final case class SqsConfig(
   destination: Either[String, File],
   parallelism: Int,
   visibilityTimeout: Duration,
-  isNoDelete: Boolean,
+  isDelete: Boolean,
+  isAsk: Boolean,
   isVerbose: Boolean
 )
 
@@ -65,6 +69,7 @@ object SqsConfig:
   private val ArgParallelismLong       = "parallelism"
   private val ArgVisibilityTimeoutLong = "visibility-timeout"
   private val ArgNoDeleteLong          = "no-delete"
+  private val ArgNoAskLong             = "yes"
   private val ArgVerboseShort          = 'v'
   private val ArgVerboseLong           = "verbose"
   private val ArgVersionLong           = "version"
@@ -110,7 +115,11 @@ object SqsConfig:
       opt[Unit](ArgNoDeleteLong)
         .optional()
         .text("do not delete messages after processing")
-        .action((_, c) => c.copy(isNoDelete = true)),
+        .action((_, c) => c.copy(isDelete = false)),
+      opt[Unit](ArgNoAskLong)
+        .optional()
+        .text("do not ask for confirmation")
+        .action((_, c) => c.copy(isAsk = false)),
       opt[Unit](ArgVerboseShort, ArgVerboseLong)
         .optional()
         .action((_, c) => c.copy(isVerbose = true))
@@ -151,7 +160,8 @@ object SqsConfig:
                       destination = destination,
                       parallelism = aConfig.parallelism,
                       visibilityTimeout = visibilityTimeout,
-                      isNoDelete = aConfig.isNoDelete,
+                      isDelete = aConfig.isDelete,
+                      isAsk = aConfig.isAsk,
                       isVerbose = aConfig.isVerbose
                     ))
         yield config

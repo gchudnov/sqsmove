@@ -27,7 +27,7 @@ object SqsMove extends ZIOAppDefault:
       as  <- args
       cfg <- SqsConfig.fromArgs(as.toList)(psetup).provideSomeLayer[Has[Console]](osetup)
       env  = makeEnv(cfg)
-      _   <- ask(cfg)
+      _   <- ask(cfg).when(cfg.isAsk)
       _   <- makeProgram(cfg).provideSomeLayer[Has[Clock] with Has[Console]](env)
     yield ()
 
@@ -75,9 +75,9 @@ object SqsMove extends ZIOAppDefault:
   private def makeEnv(cfg: SqsConfig): ZLayer[Has[Clock], Throwable, Has[Sqs]] =
     val clockEnv = Clock.any
     val copyEnv = cfg.parallelism match
-      case 0 => AutoSqs.layer(maxConcurrency = sqsMaxConcurrency, initParallelism = 1, visibilityTimeout = cfg.visibilityTimeout, isNoDelete = cfg.isNoDelete)
-      case 1 => SerialSqs.layer(maxConcurrency = sqsMaxConcurrency, visibilityTimeout = cfg.visibilityTimeout, isNoDelete = cfg.isNoDelete)
-      case m => ParallelSqs.layer(maxConcurrency = sqsMaxConcurrency, parallelism = m, visibilityTimeout = cfg.visibilityTimeout, isNoDelete = cfg.isNoDelete)
+      case 0 => AutoSqs.layer(maxConcurrency = sqsMaxConcurrency, initParallelism = 1, visibilityTimeout = cfg.visibilityTimeout, isDelete = cfg.isDelete)
+      case 1 => SerialSqs.layer(maxConcurrency = sqsMaxConcurrency, visibilityTimeout = cfg.visibilityTimeout, isDelete = cfg.isDelete)
+      case m => ParallelSqs.layer(maxConcurrency = sqsMaxConcurrency, parallelism = m, visibilityTimeout = cfg.visibilityTimeout, isDelete = cfg.isDelete)
     val appEnv = clockEnv >>> copyEnv
 
     appEnv
@@ -86,12 +86,12 @@ object SqsMove extends ZIOAppDefault:
     val isSrcDir   = cfg.source.isRight
     val isSrcQueue = cfg.source.isLeft
 
-    val action      = if (isSrcDir || (isSrcQueue && cfg.isNoDelete)) then "COPY" else "MOVE"
+    val action      = if (isSrcDir || (isSrcQueue && !cfg.isDelete)) then "COPY" else "MOVE"
     val source      = cfg.source.fold(identity, _.toString)
     val destination = cfg.destination.fold(identity, _.toString)
     val pMsg        = s"parallelism: ${cfg.parallelism}"
     val vMsg        = if isSrcDir then "" else s"visibility-timeout: ${DurationOps.asString(cfg.visibilityTimeout)}"
-    val dMsg        = if isSrcDir then "" else s"no-delete: ${cfg.isNoDelete}"
+    val dMsg        = if isSrcDir then "" else s"no-delete: ${!cfg.isDelete}"
     val paramsMsg   = List(pMsg, vMsg, dMsg).filter(_.nonEmpty).mkString("; ")
     val msg = s"""Going to ${action} messages '${source}' -> '${destination}'
                  |[${paramsMsg}]
