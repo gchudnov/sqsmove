@@ -55,10 +55,10 @@ sqsmove -s A -d B -p 1
 sqsmove -s A -d B --no-delete
 ```
 
-The flag `--no-delete` prevents the deletion of messages in the source queue. If there are *a lot* of messages in the source queue, it might be worth to increase the visibility timeout, e.g. `--visibility-timeout=15m` (the value depends on the expected time to copy all messages) to make sure that the utility is not copying the same message again when visibility timeout expires (default: 30s).
+The flag `--no-delete` prevents the deletion of messages in the source queue. If there are *a lot* of messages in the source queue, it might be worth to increase the visibility timeout, e.g. `--visibility-timeout=5m` (the value depends on the expected time to copy all messages) to make sure that the utility is not copying the same message again when visibility timeout expires (default: 30s).
 
 ```bash
-sqsmove -s A -d B --no-delete --visibility-timeout=15m
+sqsmove -s A -d B --no-delete --visibility-timeout=5m
 ```
 
 **Download messages to a local directory:**
