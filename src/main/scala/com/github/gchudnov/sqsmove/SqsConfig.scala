@@ -140,7 +140,7 @@ object SqsConfig:
              |- Move messages from queue A to queue B with parallelism 1:
              |  sqsmove -s A -d B -p 1
              |
-             |- Copy messages from queue A to queue B and visibility timeout 15m:
+             |- Copy messages from queue A to queue B with visibility timeout 15m:
              |  sqsmove -s A -d B --no-delete --visibility-timeout=15m
              |
              |- Download messages to a local directory:
@@ -149,7 +149,7 @@ object SqsConfig:
              |- Upload messages from a local directory:
              |  sqsmove --src-dir D -d B
              |
-             |sdf""".stripMargin),
+             |""".stripMargin),
       checkConfig(c =>
         for
           _ <- validateQueueOrDir(c.srcQueueName, c.srcDir)(List(ArgSrcQueueShort.toString, ArgSrcQueueLong), List(ArgSrcDirLong))
