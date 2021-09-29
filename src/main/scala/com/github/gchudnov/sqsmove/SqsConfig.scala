@@ -141,8 +141,8 @@ object SqsConfig:
              |- Move messages from queue A to queue B with parallelism 1:
              |  sqsmove -s A -d B -p 1
              |
-             |- Copy messages from queue A to queue B with visibility timeout 15m:
-             |  sqsmove -s A -d B --no-delete --visibility-timeout=15m
+             |- Copy messages from queue A to queue B with visibility timeout 5m:
+             |  sqsmove -s A -d B --no-delete --visibility-timeout=5m
              |
              |- Download messages to a local directory:
              |  sqsmove -s A --dst-dir D
