@@ -3,11 +3,12 @@ import sbt._
 object Dependencies {
 
   object versions {
-    val awsSdk        = "2.17.46"
+    val awsSdk        = "2.17.48"
     val kindProjector = "0.10.3"
     val logback       = "1.2.6"
     val scopt         = "4.0.1"
     val zio           = "2.0.0-M3"
+    val scalaCsv      = "1.3.8"
   }
 
   private val scopt = "com.github.scopt" %% "scopt" % versions.scopt
@@ -24,6 +25,8 @@ object Dependencies {
   private val zioTestSbt      = "dev.zio" %% "zio-test-sbt"      % versions.zio
   private val zioTestMagnolia = "dev.zio" %% "zio-test-magnolia" % versions.zio
 
+  private val scalaCsv = "com.github.tototoshi" %% "scala-csv" % versions.scalaCsv
+
   val sqsMove: Seq[ModuleID] = {
     val compile = Seq(
       awsNetty,
@@ -31,7 +34,8 @@ object Dependencies {
       scopt,
       zio,
       zioStreams,
-      logback
+      logback,
+      scalaCsv
     ) map (_ % "compile")
     val test = Seq(zioTest, zioTestSbt, zioTestMagnolia) map (_ % "test")
     compile ++ test

@@ -73,7 +73,7 @@ abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
         filePath <- ZIO.attempt(Paths.get(dstDir.getAbsolutePath, m.messageId))
         _        <- ZIO.fromEither(FileOps.saveString(filePath.toFile, m.body))
         attrMap   = m.messageAttributes.asScala.toMap
-        meta      = CsvOps.asString(toTable(attrMap))
+        meta      = CsvOps.csvToString(toTable(attrMap))
         _        <- ZIO.fromEither(FileOps.saveString(FileOps.replaceExtension(filePath.toFile, BasicSqs.extMeta), meta)).when(attrMap.nonEmpty)
       yield m.receiptHandle
     )
@@ -112,10 +112,10 @@ object BasicSqs:
     val lines = m
       .map((k, ma) =>
         val value = ma.dataType match
-          case "String" => s"\"${ma.stringValue}\""
+          case "String" => ma.stringValue
           case "Number" => ma.stringValue
           case "Binary" => ArrayOps.bytesToBase64(ma.binaryValue.asByteArray)
-          case _        => sys.error(s"unexpected Message dataType: ${ma.dataType}")
+          case _        => sys.error(s"Unsupported SQS Message DataType: '${ma.dataType}' when decoding metadata")
         List(k, ma.dataType, value)
       )
       .toList
@@ -137,9 +137,10 @@ object BasicSqs:
                    val colValue = row(attrValueIdx)
 
                    val msgAttr = (colType match
-                     case "String" => MessageAttributeValue.builder().stringValue(unquote(colValue)).dataType("String").build()
+                     case "String" => MessageAttributeValue.builder().stringValue(colValue).dataType("String").build()
                      case "Number" => MessageAttributeValue.builder().stringValue(colValue).dataType("Number").build()
                      case "Binary" => MessageAttributeValue.builder().binaryValue(SdkBytes.fromUtf8String(colValue)).dataType("Binary").build()
+                     case _        => throw IllegalArgumentException(s"Unsupported SQS Message DataType: '${colType}' when encoding metadata")
                    )
 
                    (colName, msgAttr)
@@ -152,6 +153,3 @@ object BasicSqs:
     val n = header.indexOf(name, 0)
     if n != -1 then Right(n)
     else Left(new IllegalArgumentException(s"${name} not found in metadata table"))
-
-  private def unquote(s: String): String =
-    s.replaceAll("^\"|\"$", "")
