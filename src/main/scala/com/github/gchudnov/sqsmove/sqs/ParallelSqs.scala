@@ -31,7 +31,13 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int, visibilityTimeout
       .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b).when(!isNoDelete).as(b.size) @@ countMessages).unit)
       .runDrain
 
-  override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] = ???
+  override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
+    ZStream
+      .fromIterableZIO(ZIO.fromEither(BasicSqs.listFilesWithoutMetadata(srcDir)))
+      .grouped(AwsSqs.receiveMaxNumberOfMessages)
+      .filter(_.nonEmpty)
+      .mapZIOPar(parallelism)(b => ZIO.foreach(b)(messageFromFile).flatMap(b => sendBatch(dstQueueUrl, b).as(b.size) @@ countMessages))
+      .runDrain
 
 object ParallelSqs:
   def layer(maxConcurrency: Int, parallelism: Int, visibilityTimeout: Duration, isNoDelete: Boolean): ZLayer[Any, Throwable, Has[Sqs]] =

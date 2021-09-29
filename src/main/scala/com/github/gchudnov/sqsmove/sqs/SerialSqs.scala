@@ -28,11 +28,11 @@ final class SerialSqs(maxConcurrency: Int, visibilityTimeout: Duration, isNoDele
   override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZIO
       .fromEither(BasicSqs.listFilesWithoutMetadata(srcDir))
-      .map(files => files.grouped(AwsSqs.receiveMaxNumberOfMessages).toList)
+      .map(_.grouped(AwsSqs.receiveMaxNumberOfMessages).toList)
       .flatMap(chunkedFiles =>
         ZIO.foreach(chunkedFiles)(chunk =>
           ZIO
-            .foreach(chunk.zipWithIndex) { case (file, i) => messageFromFile(i, file) }
+            .foreach(chunk)(messageFromFile)
             .flatMap(b => sendBatch(dstQueueUrl, b.toIndexedSeq).as(b.size) @@ countMessages)
         )
       )

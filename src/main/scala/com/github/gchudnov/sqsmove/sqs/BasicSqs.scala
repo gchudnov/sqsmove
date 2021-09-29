@@ -170,10 +170,10 @@ object BasicSqs:
   /**
    * Create am SQS Message (possibly with metadata)
    */
-  private[sqs] def messageFromFile(id: Int, file: File): ZIO[Any, Throwable, Message] =
+  private[sqs] def messageFromFile(file: File): ZIO[Any, Throwable, Message] =
     for
       (data, meta) <- readDataWithMetadata(file)
-      m            <- ZIO.fromEither(BasicSqs.toMessage(id, data, meta))
+      m            <- ZIO.fromEither(BasicSqs.toMessage(data, meta))
     yield m
 
   /**
@@ -190,9 +190,9 @@ object BasicSqs:
   /**
    * Makes a message from the raw data and metadata
    */
-  private[sqs] def toMessage(id: Int, data: String, metadata: String): Either[Throwable, Message] =
+  private[sqs] def toMessage(data: String, metadata: String): Either[Throwable, Message] =
     for
       metaTable <- CsvOps.tableFromString(metadata)
       attrs     <- attrsFromTable(metaTable)
-      m         <- allCatch.either(Message.builder.messageId(id.toString).messageAttributes(attrs.asJava).body(data).build())
+      m         <- allCatch.either(Message.builder.messageAttributes(attrs.asJava).body(data).build())
     yield m
