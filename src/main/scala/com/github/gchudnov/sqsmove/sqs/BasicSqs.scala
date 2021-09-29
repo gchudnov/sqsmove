@@ -15,7 +15,6 @@ import com.github.gchudnov.sqsmove.util.ArrayOps
 import com.github.gchudnov.sqsmove.util.DirOps
 import java.nio.file.Paths
 import scala.util.control.Exception.*
-import scala.util as ju
 
 /**
  * Basic SQS Functionality
@@ -159,8 +158,17 @@ object BasicSqs:
   /**
    * List all files in the directory, excluding files ending with `.meta` suffix.
    */
-  private[sqs] def listFilesExcludingMetadata(dir: File): Either[Throwable, List[File]] =
+  private[sqs] def listFilesWithoutMetadata(dir: File): Either[Throwable, List[File]] =
     DirOps.listFilesBy(dir, file => !file.getName.endsWith(extMeta))
+
+  /**
+   * Create am SQS Message (possibly with metadata)
+   */
+  private[sqs] def messageFromFile(id: Int, file: File): ZIO[Any, Throwable, Message] =
+    for
+      (data, meta) <- readDataWithMetadata(file)
+      m            <- ZIO.fromEither(BasicSqs.toMessage(id, data, meta))
+    yield m
 
   /**
    * Read both data and metadata for the given file
@@ -175,8 +183,10 @@ object BasicSqs:
 
   /**
    * Makes a message from the raw data and metadata
-   */ 
-  private[sqs] def toMessage(data: String, metadata: String): Message = 
-    ???
-
-  // TODO: implement it
+   */
+  private[sqs] def toMessage(id: Int, data: String, metadata: String): Either[Throwable, Message] =
+    for
+      metaTable <- CsvOps.tableFromString(metadata)
+      attrs     <- attrsFromTable(metaTable)
+      m         <- allCatch.either(Message.builder.messageId(id.toString).messageAttributes(attrs.asJava).body(data).build())
+    yield m

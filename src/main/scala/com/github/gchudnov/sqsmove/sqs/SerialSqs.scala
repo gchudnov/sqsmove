@@ -1,11 +1,10 @@
 package com.github.gchudnov.sqsmove.sqs
 
 import com.github.gchudnov.sqsmove.sqs.AwsSqs.makeReceiveRequest
-import com.github.gchudnov.sqsmove.sqs.BasicSqs.countMessages
+import com.github.gchudnov.sqsmove.sqs.BasicSqs.{ countMessages, messageFromFile }
 import com.github.gchudnov.sqsmove.util.DirOps
 import zio.*
 import java.io.File
-
 
 /**
  * Serial SQS Move
@@ -27,26 +26,17 @@ final class SerialSqs(maxConcurrency: Int, visibilityTimeout: Duration, isNoDele
       .forever
 
   override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
-    for {
-      files <- ZIO.fromEither(BasicSqs.listFilesExcludingMetadata(srcDir))
-      chunkedFiles = files.grouped(AwsSqs.receiveMaxNumberOfMessages).toList
-      _ <- ZIO.foreach(chunkedFiles)(chunk => {
-        ZIO.foreach(chunk)(file => {
-          ???
-          for {
-            dm <- BasicSqs.readDataWithMetadata(file)
-            (data, meta) = dm
-            ???
-          } yield ()
-        })
-      })
-    } yield ()
-
-
-// TODO: read dir contents to the queue (without .meta extension)
-// TODO: read data file, read meta if available
-// TODO: encode data + meta
-// TODO: send it
+    ZIO
+      .fromEither(BasicSqs.listFilesWithoutMetadata(srcDir))
+      .map(files => files.grouped(AwsSqs.receiveMaxNumberOfMessages).toList)
+      .flatMap(chunkedFiles =>
+        ZIO.foreach(chunkedFiles)(chunk =>
+          ZIO
+            .foreach(chunk.zipWithIndex) { case (file, i) => messageFromFile(i, file) }
+            .flatMap(b => sendBatch(dstQueueUrl, b.toIndexedSeq).as(b.size) @@ countMessages)
+        )
+      )
+      .as(())
 
 object SerialSqs:
   def layer(maxConcurrency: Int, visibilityTimeout: Duration, isNoDelete: Boolean): ZLayer[Any, Throwable, Has[Sqs]] =

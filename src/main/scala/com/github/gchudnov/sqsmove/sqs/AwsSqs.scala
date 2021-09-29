@@ -12,9 +12,9 @@ import scala.jdk.CollectionConverters.*
 object AwsSqs:
   type ReceiptHandle = String
 
-  private val receiveAllAttributeNames   = List("All").asJava
+  private val receiveAllAttributeNames        = List("All").asJava
   private[sqs] val receiveMaxNumberOfMessages = 10
-  private val receiveWaitTimeSeconds     = 20
+  private val receiveWaitTimeSeconds          = 20
 
   def makeHttpClient(maxConcurrency: Int): SdkAsyncHttpClient =
     NettyNioAsyncHttpClient.builder().maxConcurrency(maxConcurrency).build()
