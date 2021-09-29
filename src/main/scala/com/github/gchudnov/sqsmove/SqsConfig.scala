@@ -133,7 +133,8 @@ object SqsConfig:
         .text("prints the version")
         .validate(_ => Left(OEffectVersionKey)),
       note("""
-             |Usage:
+             |Examples:
+             |
              |- Move messages from queue A to queue B:
              |  sqsmove -s A -d B
              |
