@@ -1,6 +1,2 @@
-TODO: add receive-wait seconds parameter
-
-TODO: add more tests on storing meta and reading it back
-
 TODO: add -c --count to process the given amount of messages
-TODO: with-attrs -- save attributes as well
+

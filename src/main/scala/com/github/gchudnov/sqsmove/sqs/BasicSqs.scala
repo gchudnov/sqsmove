@@ -156,10 +156,10 @@ object BasicSqs:
              )
       yield m
 
-  private def findColumnIndex(header: List[String], name: String): Either[Throwable, Int] =
-    val n = header.indexOf(name, 0)
-    if n != -1 then Right(n)
-    else Left(new IllegalArgumentException(s"Column '${name}' is not found in metadata"))
+  private[sqs] def findColumnIndex(header: Seq[String], name: String): Either[Throwable, Int] =
+    header.indexOf(name, 0) match
+      case n if n != -1 => Right(n)
+      case _            => Left(new IllegalArgumentException(s"Column '${name}' is not found in metadata"))
 
   /**
    * List all files in the directory, excluding files ending with `.meta` suffix.

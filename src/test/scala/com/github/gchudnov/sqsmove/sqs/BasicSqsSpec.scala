@@ -118,7 +118,31 @@ object BasicSqsSpec extends DefaultRunnableSpec:
       yield assert(m.body)(equalTo(data)) && assert(m.messageAttributes.asScala.toMap)(equalTo(expectedAttrs))
     },
     test("message is created from a file when there is metadata but the file is empty") {
-      // TODO: add a test when metadata exists, but empty
-      ???
+      val data = "123"
+      val meta = ""
+
+      val errOrFile = for
+        d1 <- newTmpDir("msg-and-meta")
+        f1  = new File(d1, "msg")
+        f2  = new File(d1, "msg.meta")
+        _  <- saveString(f1, data)
+        _  <- saveString(f2, meta)
+      yield f1
+
+      val expectedAttrs = Map.empty[String, MessageAttributeValue]
+
+      for
+        f <- ZIO.fromEither(errOrFile)
+        m <- messageFromFile(f)
+      yield assert(m.body)(equalTo(data)) && assert(m.messageAttributes.asScala.toMap)(equalTo(expectedAttrs))
+    },
+    test("find column index can be found if exists") {
+      val header = List("aaa", "bbb", "ccc")
+      val name = "bbb"
+
+      val actual = findColumnIndex(header, name)
+      val expected = 1
+
+      assert(actual)(equalTo(Right(expected)))
     }
   )
