@@ -143,6 +143,6 @@ object BasicSqsSpec extends DefaultRunnableSpec:
       val actual = findColumnIndex(header, name)
       val expected = 1
 
-      assert(actual)(equalTo(Right(expected)))
+      assert(actual)(equalTo(Some(expected)))
     }
   )

@@ -133,9 +133,9 @@ object BasicSqs:
     else
       val header :: tail = t
       for
-        attrNameIdx  <- findColumnIndex(header, attrName)
-        attrTypeIdx  <- findColumnIndex(header, attrType)
-        attrValueIdx <- findColumnIndex(header, attrValue)
+        attrNameIdx  <- findColumnIndex(header, attrName).toRight(columnNotFound(attrName))
+        attrTypeIdx  <- findColumnIndex(header, attrType).toRight(columnNotFound(attrName))
+        attrValueIdx <- findColumnIndex(header, attrValue).toRight(columnNotFound(attrName))
         m <- allCatch.either(
                tail
                  .map((row) =>
@@ -156,10 +156,13 @@ object BasicSqs:
              )
       yield m
 
-  private[sqs] def findColumnIndex(header: Seq[String], name: String): Either[Throwable, Int] =
+  private def columnNotFound(name: String): Throwable =
+    new IllegalArgumentException(s"Column '${name}' is not found in metadata")
+
+  private[sqs] def findColumnIndex(header: Seq[String], name: String): Option[Int] =
     header.indexOf(name, 0) match
-      case n if n != -1 => Right(n)
-      case _            => Left(new IllegalArgumentException(s"Column '${name}' is not found in metadata"))
+      case n if n != -1 => Some(n)
+      case _            => None
 
   /**
    * List all files in the directory, excluding files ending with `.meta` suffix.
