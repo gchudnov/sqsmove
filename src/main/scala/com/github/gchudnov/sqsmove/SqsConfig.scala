@@ -149,7 +149,6 @@ object SqsConfig:
              |
              |- Upload messages from directory D:
              |  sqsmove --src-dir D -d B
-             |
              |""".stripMargin),
       checkConfig(c =>
         for
