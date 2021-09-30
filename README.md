@@ -61,7 +61,7 @@ The flag `--no-delete` prevents the deletion of messages in the source queue. If
 sqsmove -s A -d B --no-delete --visibility-timeout=5m
 ```
 
-**Download messages to a local directory:**
+**Download messages to directory D:**
 
 ```bash
 sqsmove -s A --dst-dir D
@@ -81,7 +81,7 @@ binAttr,Binary,QUJD
 
 The supported types are `String`, `Number` and `Binary` where binary data is encoded as a Base64 string.
 
-**Upload messages from a local directory:**
+**Upload messages from directory D:**
 
 ```bash
 sqsmove --src-dir D -d B
