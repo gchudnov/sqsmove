@@ -19,5 +19,7 @@ object CsvOps:
     os.toString(StandardCharsets.UTF_8)
 
   def tableFromString(s: String): Either[Throwable, List[List[String]]] =
-    val reader = CSVReader.open(SSource.fromString(s))
-    allCatch.either(reader.all())
+    if s.isEmpty then Right[Throwable, List[List[String]]](List.empty[List[String]])
+    else
+      val reader = CSVReader.open(SSource.fromString(s))
+      allCatch.either(reader.all())

@@ -62,7 +62,7 @@ object BasicSqsSpec extends DefaultRunnableSpec:
                    |numAttr,Number,1
                    |binAttr,Binary,QUJD
                    |""".stripMargin
-      val errOrActual = toMessage(data, meta)
+      val errOrActual = toMessage(data, Some(meta))
 
       val expectedBody = data
       val expectedAttrs = Map[String, MessageAttributeValue](
@@ -75,11 +75,12 @@ object BasicSqsSpec extends DefaultRunnableSpec:
       assert(errOrActual.map(_.messageAttributes.asScala.toMap))(equalTo(Right(expectedAttrs)))
     },
     test("message is created from a file when there is no metadata") {
-      val body = "123"
+      val data = "123"
+
       val errOrFile = for
         d1 <- newTmpDir("msg-no-meta")
         f1  = new File(d1, "msg")
-        _  <- saveString(f1, body)
+        _  <- saveString(f1, data)
       yield f1
 
       val expectedAttrs = Map.empty[String, MessageAttributeValue]
@@ -87,6 +88,33 @@ object BasicSqsSpec extends DefaultRunnableSpec:
       for
         f <- ZIO.fromEither(errOrFile)
         m <- messageFromFile(f)
-      yield assert(m.body)(equalTo(body)) && assert(m.messageAttributes.asScala.toMap)(equalTo(expectedAttrs))
+      yield assert(m.body)(equalTo(data)) && assert(m.messageAttributes.asScala.toMap)(equalTo(expectedAttrs))
+    },
+    test("message is created from a file when there is metadata") {
+      val data = "123"
+      val meta = """name,type,value
+                   |strAttr,String,str
+                   |numAttr,Number,1
+                   |binAttr,Binary,QUJD
+                   |""".stripMargin
+
+      val errOrFile = for
+        d1 <- newTmpDir("msg-and-meta")
+        f1  = new File(d1, "msg")
+        f2  = new File(d1, "msg.meta")
+        _  <- saveString(f1, data)
+        _  <- saveString(f2, meta)
+      yield f1
+
+      val expectedAttrs = Map[String, MessageAttributeValue](
+        "strAttr" -> MessageAttributeValue.builder().stringValue("str").dataType("String").build(),
+        "numAttr" -> MessageAttributeValue.builder().stringValue("1").dataType("Number").build(),
+        "binAttr" -> MessageAttributeValue.builder().binaryValue(SdkBytes.fromUtf8String("QUJD")).dataType("Binary").build()
+      )
+
+      for
+        f <- ZIO.fromEither(errOrFile)
+        m <- messageFromFile(f)
+      yield assert(m.body)(equalTo(data)) && assert(m.messageAttributes.asScala.toMap)(equalTo(expectedAttrs))
     }
   )

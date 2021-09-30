@@ -179,20 +179,19 @@ object BasicSqs:
   /**
    * Read both data and metadata for the given file
    */
-  private[sqs] def readDataWithMetadata(file: File): ZIO[Any, Throwable, (String, String)] =
-    val data = ZIO.fromEither(FileOps.readAll(file))
-
-    val metaFile = FileOps.replaceExtension(file, extMeta)
-    val metaData = if metaFile.exists() then ZIO.fromEither(FileOps.readAll(file)) else ZIO.succeed("")
-
-    data.zip(metaData)
+  private[sqs] def readDataWithMetadata(file: File): ZIO[Any, Throwable, (String, Option[String])] =
+    for
+      data     <- ZIO.fromEither(FileOps.readAll(file))
+      metaFile  = FileOps.replaceExtension(file, extMeta)
+      metaData <- ZIO.fromEither(FileOps.readAll(metaFile)).when(metaFile.exists())
+    yield (data, metaData)
 
   /**
    * Makes a message from the raw data and metadata
    */
-  private[sqs] def toMessage(data: String, metadata: String): Either[Throwable, Message] =
+  private[sqs] def toMessage(data: String, metadata: Option[String]): Either[Throwable, Message] =
     for
-      metaTable <- CsvOps.tableFromString(metadata)
+      metaTable <- CsvOps.tableFromString(metadata.getOrElse(""))
       attrs     <- attrsFromTable(metaTable)
       m         <- allCatch.either(Message.builder.messageAttributes(attrs.asJava).body(data).build())
     yield m
