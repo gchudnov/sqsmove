@@ -36,7 +36,7 @@ final class SerialSqs(maxConcurrency: Int, visibilityTimeout: Duration, isDelete
             .flatMap(b => sendBatch(dstQueueUrl, b.toIndexedSeq).as(b.size) @@ countMessages)
         )
       )
-      .as(())
+      .unit
 
 object SerialSqs:
   def layer(maxConcurrency: Int, visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Any, Throwable, Has[Sqs]] =

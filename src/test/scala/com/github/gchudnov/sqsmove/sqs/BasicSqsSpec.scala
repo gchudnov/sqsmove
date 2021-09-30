@@ -7,6 +7,9 @@ import com.github.gchudnov.sqsmove.sqs.BasicSqs.*
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue
 import software.amazon.awssdk.core.SdkBytes
 import scala.jdk.CollectionConverters.*
+import com.github.gchudnov.sqsmove.util.DirOps.*
+import com.github.gchudnov.sqsmove.util.FileOps.*
+import java.io.File
 
 object BasicSqsSpec extends DefaultRunnableSpec:
   def spec: ZSpec[Environment, Failure] = suite("BasicSqs")(
@@ -70,5 +73,20 @@ object BasicSqsSpec extends DefaultRunnableSpec:
 
       assert(errOrActual.map(_.body))(equalTo(Right(expectedBody))) &&
       assert(errOrActual.map(_.messageAttributes.asScala.toMap))(equalTo(Right(expectedAttrs)))
+    },
+    test("message is created from a file when there is no metadata") {
+      val body = "123"
+      val errOrFile = for
+        d1 <- newTmpDir("msg-no-meta")
+        f1  = new File(d1, "msg")
+        _  <- saveString(f1, body)
+      yield f1
+
+      val expectedAttrs = Map.empty[String, MessageAttributeValue]
+
+      for
+        f <- ZIO.fromEither(errOrFile)
+        m <- messageFromFile(f)
+      yield assert(m.body)(equalTo(body)) && assert(m.messageAttributes.asScala.toMap)(equalTo(expectedAttrs))
     }
   )
