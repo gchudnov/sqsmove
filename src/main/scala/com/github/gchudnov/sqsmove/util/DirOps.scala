@@ -22,8 +22,7 @@ object DirOps:
   def listFilesBy(dir: File, predicate: (File) => Boolean): Either[Throwable, List[File]] =
     allCatch.either {
       dir.listFiles
-        .filter(_.isFile)
-        .filter(predicate)
+        .filter(it => it.isFile && predicate(it))
         .toList
     }
 
