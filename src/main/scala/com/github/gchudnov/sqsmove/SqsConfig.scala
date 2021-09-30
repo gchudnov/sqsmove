@@ -135,20 +135,20 @@ object SqsConfig:
       note("""
              |Examples:
              |
-             |- Move messages from queue A to queue B:
-             |  sqsmove -s A -d B
+             |  - Move messages from queue A to queue B:
+             |    sqsmove -s A -d B
              |
-             |- Move messages from queue A to queue B with parallelism 1:
-             |  sqsmove -s A -d B -p 1
+             |  - Move messages from queue A to queue B with parallelism 1:
+             |    sqsmove -s A -d B -p 1
              |
-             |- Copy messages from queue A to queue B with visibility timeout 5m:
-             |  sqsmove -s A -d B --no-delete --visibility-timeout=5m
+             |  - Copy messages from queue A to queue B with visibility timeout 5m:
+             |    sqsmove -s A -d B --no-delete --visibility-timeout=5m
              |
-             |- Download messages to directory D:
-             |  sqsmove -s A --dst-dir D
+             |  - Download messages to directory D:
+             |    sqsmove -s A --dst-dir D
              |
-             |- Upload messages from directory D:
-             |  sqsmove --src-dir D -d B
+             |  - Upload messages from directory D:
+             |    sqsmove --src-dir D -d B
              |""".stripMargin),
       checkConfig(c =>
         for
