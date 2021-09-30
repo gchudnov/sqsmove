@@ -1,10 +1,6 @@
-// TODO: add test for replace extension
+TODO: add receive-wait seconds parameter
 
-// TODO: replace "\n" wih sys....
-// TODO: remove trim --> .mkString("\n").trim()
+TODO: add more tests on storing meta and reading it back
 
-// TODO: add test for readAll
-
-// TODO: add test for saveString
-
-// TODO: add receive-wait seconds parameter
+TODO: add -c --count to process the given amount of messages
+TODO: with-attrs -- save attributes as well

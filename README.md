@@ -67,10 +67,10 @@ sqsmove -s A -d B --no-delete --visibility-timeout=5m
 sqsmove -s A --dst-dir D
 ```
 
-It downloads both body of the message and attributes as two separate files and saves them to the specified directory.
-If the message has id `X`, body will be saved to the file `X`, attributes to the file `X.meta`.
+It downloads both body of the message and message attributes as two separate files and saves them to the specified directory.
+If the message has id `X`, body will be saved to the file `X`, message attributes to the file `X.meta`.
 
-Attributes are stored as a CSV with 3 columns: `name`, `type` and `value` where each line is a separate attribute:
+Attributes are stored as a CSV with 3 columns: `name`, `type` and `value` where each line is a separate message attribute:
 
 ```text
 name,type,value
@@ -87,7 +87,7 @@ The supported types are `String`, `Number` and `Binary` where binary data is enc
 sqsmove --src-dir D -d B
 ```
 
-When uploading messages from a local directory, files are not deleted. If there is a corresponding `.meta` file is present for a file, it will be used as a source of attributes.
+When uploading messages from a local directory, files are not deleted. If there is a corresponding `.meta` file is present for a file, it will be used as a source of message attributes.
 
 **Confirm the action:**
 

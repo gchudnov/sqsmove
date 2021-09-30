@@ -6,6 +6,7 @@ import zio.*
 import com.github.gchudnov.sqsmove.sqs.BasicSqs.*
 import software.amazon.awssdk.services.sqs.model.MessageAttributeValue
 import software.amazon.awssdk.core.SdkBytes
+import scala.jdk.CollectionConverters.*
 
 object BasicSqsSpec extends DefaultRunnableSpec:
   def spec: ZSpec[Environment, Failure] = suite("BasicSqs")(
@@ -50,5 +51,24 @@ object BasicSqsSpec extends DefaultRunnableSpec:
       val expected    = Map.empty[String, MessageAttributeValue]
 
       assert(errOrActual)(equalTo(Right(expected)))
+    },
+    test("data and meta can be converted to a message") {
+      val data = "123"
+      val meta = """name,type,value
+                   |strAttr,String,str
+                   |numAttr,Number,1
+                   |binAttr,Binary,QUJD
+                   |""".stripMargin
+      val errOrActual = toMessage(data, meta)
+
+      val expectedBody = data
+      val expectedAttrs = Map[String, MessageAttributeValue](
+        "strAttr" -> MessageAttributeValue.builder().stringValue("str").dataType("String").build(),
+        "numAttr" -> MessageAttributeValue.builder().stringValue("1").dataType("Number").build(),
+        "binAttr" -> MessageAttributeValue.builder().binaryValue(SdkBytes.fromUtf8String("QUJD")).dataType("Binary").build()
+      )
+
+      assert(errOrActual.map(_.body))(equalTo(Right(expectedBody))) &&
+      assert(errOrActual.map(_.messageAttributes.asScala.toMap))(equalTo(Right(expectedAttrs)))
     }
   )
