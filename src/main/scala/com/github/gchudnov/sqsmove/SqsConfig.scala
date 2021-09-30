@@ -144,17 +144,17 @@ object SqsConfig:
              |- Copy messages from queue A to queue B with visibility timeout 5m:
              |  sqsmove -s A -d B --no-delete --visibility-timeout=5m
              |
-             |- Download messages to a local directory:
+             |- Download messages to directory D:
              |  sqsmove -s A --dst-dir D
              |
-             |- Upload messages from a local directory:
+             |- Upload messages from directory D:
              |  sqsmove --src-dir D -d B
              |
              |""".stripMargin),
       checkConfig(c =>
         for
-          _ <- validateQueueOrDir(c.srcQueueName, c.srcDir)(List(ArgSrcQueueShort.toString, ArgSrcQueueLong), List(ArgSrcDirLong))
-          _ <- validateQueueOrDir(c.dstQueueName, c.dstDir)(List(ArgDstQueueShort.toString, ArgDstQueueLong), List(ArgDstDirLong))
+          _ <- validateQueueOrDir("source")(c.srcQueueName, c.srcDir)
+          _ <- validateQueueOrDir("destination")(c.dstQueueName, c.dstDir)
         yield ()
       )
     )
@@ -212,11 +212,20 @@ object SqsConfig:
   def version(): String =
     s"${AppBuildInfo.name} ${AppBuildInfo.version}"
 
-  def validateQueueOrDir(queueName: Option[String], dir: Option[File])(queueArgs: List[String], dirArgs: List[String]): Either[String, Unit] =
+  def validateQueueOrDir(useCase: String)(queueName: Option[String], dir: Option[File]): Either[String, Unit] =
+    val (queueOpts, dirOpts) = useCase match
+      case "source" =>
+        (List("-" + ArgSrcQueueShort.toString, "--" + ArgSrcQueueLong), List("--" + ArgSrcDirLong))
+      case "destination" =>
+        (List("-" + ArgDstQueueShort.toString, "--" + ArgDstQueueLong), List("--" + ArgDstDirLong))
+
     (queueName, dir) match
-      case (Some(_), Some(_)) => Left(s"Queue name (${queueArgs.mkString(",")}) and directory (${dirArgs.mkString(",")}) cannot be specified at the same time.")
-      case (None, None)       => Left(s"Queue name (${queueArgs.mkString(",")}) or directory (${dirArgs.mkString(",")}) should be specified.")
-      case (_, _)             => Right[String, Unit](())
+      case (Some(_), Some(_)) =>
+        Left(s"Queue ${queueOpts.mkString("[", ",", "]")} and directory options ${dirOpts.mkString("[", ",", "]")} cannot be specified at the same time for a ${useCase}.")
+      case (None, None) =>
+        Left(s"Please specify queue ${queueOpts.mkString("[", ",", "]")} or directory options ${dirOpts.mkString("[", ",", "]")} for a ${useCase}.")
+      case (_, _) =>
+        Right[String, Unit](())
 
   def queueOrDir(queueName: Option[String], dir: Option[File])(name: String): ZIO[Any, Throwable, Either[String, File]] =
     (queueName, dir) match

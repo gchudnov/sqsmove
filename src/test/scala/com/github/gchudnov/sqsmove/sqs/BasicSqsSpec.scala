@@ -116,5 +116,9 @@ object BasicSqsSpec extends DefaultRunnableSpec:
         f <- ZIO.fromEither(errOrFile)
         m <- messageFromFile(f)
       yield assert(m.body)(equalTo(data)) && assert(m.messageAttributes.asScala.toMap)(equalTo(expectedAttrs))
+    },
+    test("message is created from a file when there is metadata but the file is empty") {
+      // TODO: add a test when metadata exists, but empty
+      ???
     }
   )

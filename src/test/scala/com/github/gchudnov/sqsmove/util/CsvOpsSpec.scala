@@ -46,5 +46,13 @@ object CsvOpsSpec extends DefaultRunnableSpec:
       val expected = List(List("name", "type", "value"), List("strAttr", "String", "str"), List("numAttr", "Number", "1"), List("binAttr", "Binary", "QUJD"))
 
       assert(actual)(equalTo(Right(expected)))
+    },
+    test("CSV string can be deserialized to a table when empty") {
+      val data = ""
+
+      val actual   = CsvOps.tableFromString(data)
+      val expected = List.empty[List[String]]
+
+      assert(actual)(equalTo(Right(expected)))
     }
   )
