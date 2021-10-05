@@ -138,9 +138,9 @@ object BasicSqsSpec extends DefaultRunnableSpec:
     },
     test("find column index can be found if exists") {
       val header = List("aaa", "bbb", "ccc")
-      val name = "bbb"
+      val name   = "bbb"
 
-      val actual = findColumnIndex(header, name)
+      val actual   = findColumnIndex(header, name)
       val expected = 1
 
       assert(actual)(equalTo(Some(expected)))
