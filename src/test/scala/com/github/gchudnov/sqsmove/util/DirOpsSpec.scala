@@ -21,9 +21,9 @@ object DirOpsSpec extends DefaultRunnableSpec:
         _  <- saveString(new File(d2, nf2), "")
         _  <- saveString(new File(d2, nf3), "")
         fs <- listFilesBy(d2, it => it.getName.endsWith("txt")).map(_.map(_.getName))
-      yield fs
+      yield fs.sorted
 
-      val expected = List(nf1, nf3)
+      val expected = List(nf1, nf3).sorted
 
       assert(actual)(equalTo(Right(expected)))
     }
