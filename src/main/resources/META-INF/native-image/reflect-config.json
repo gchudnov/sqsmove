@@ -113,15 +113,6 @@
     ]
   },
   {
-    "name": "com.sun.crypto.provider.HmacSHA1",
-    "methods": [
-      {
-        "name": "<init>",
-        "parameterTypes": []
-      }
-    ]
-  },
-  {
     "name": "com.sun.crypto.provider.TlsKeyMaterialGenerator",
     "methods": [
       {
@@ -1022,6 +1013,24 @@
     ]
   },
   {
+    "name": "izumi.reflect.macrortti.LightTypeTag",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "izumi.reflect.macrortti.LightTypeTag$ParsedLightTypeTag110",
+    "fields": [
+      {
+        "name": "0bitmap$4",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
     "name": "java.io.FilePermission"
   },
   {
@@ -1199,11 +1208,11 @@
     ]
   },
   {
-    "name": "software.amazon.awssdk.core.internal.interceptor.HttpChecksumRequiredInterceptor",
-    "methods": [
+    "name": "scopt.OParser$",
+    "fields": [
       {
-        "name": "<init>",
-        "parameterTypes": []
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
       }
     ]
   },
@@ -1405,11 +1414,7 @@
   },
   {
     "name": "sun.misc.Unsafe",
-    "fields": [
-      {
-        "name": "theUnsafe"
-      }
-    ],
+    "allDeclaredFields": true,
     "methods": [
       {
         "name": "copyMemory",
@@ -1801,6 +1806,174 @@
     ]
   },
   {
-    "name": "zio.ZScope$OrderedFinalizer[]"
+    "name": "zio.Chunk$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.Executor",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.PlatformSpecific$ZEnv$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.Runtime$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.RuntimeConfig$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.Schedule$$anon$27",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.ZFiberRef$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.ZIO$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.ZIOMetric$Counter",
+    "fields": [
+      {
+        "name": "0bitmap$2",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.ZLayer",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.ZManaged",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.ZManaged$",
+    "fields": [
+      {
+        "name": "0bitmap$2",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.internal.FiberContext",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.internal.Platform$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.internal.metrics.package$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.internal.stacktracer.Tracer$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.package$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.stm.ZSTM$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.stream.ZStream$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
   }
 ]
