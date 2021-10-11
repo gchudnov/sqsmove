@@ -8,13 +8,15 @@ import software.amazon.awssdk.services.sqs.model.*
 
 import scala.collection.immutable.IndexedSeq
 import scala.jdk.CollectionConverters.*
+import java.util.List as JList
 
 object AwsSqs:
   type ReceiptHandle = String
 
-  private val receiveAllAttributeNames        = List("All").asJava
-  private[sqs] val receiveMaxNumberOfMessages = 10
-  private val receiveWaitTimeSeconds          = 20
+  private val receiveAllAttributeNames: JList[String] = List("All").asJava
+  private[sqs] val maxBatchSize: Int                  = 10
+  private[sqs] val waitBatchMillis: Long              = 1000
+  private val receiveWaitTimeSeconds: Int             = 20
 
   def makeHttpClient(maxConcurrency: Int): SdkAsyncHttpClient =
     NettyNioAsyncHttpClient.builder().maxConcurrency(maxConcurrency).build()
@@ -26,13 +28,13 @@ object AwsSqs:
       .httpClient(httpClient)
       .build()
 
-  def makeReceiveRequest(queueUrl: String, visibilityTimeoutSec: Long): ReceiveMessageRequest =
+  def makeReceiveRequest(queueUrl: String, visibilityTimeoutSec: Long, batchSize: Int): ReceiveMessageRequest =
     ReceiveMessageRequest
       .builder()
       .queueUrl(queueUrl)
       .attributeNamesWithStrings(receiveAllAttributeNames)
       .messageAttributeNames(receiveAllAttributeNames)
-      .maxNumberOfMessages(receiveMaxNumberOfMessages)
+      .maxNumberOfMessages(batchSize)
       .waitTimeSeconds(receiveWaitTimeSeconds)
       .visibilityTimeout(visibilityTimeoutSec.toInt)
       .build()

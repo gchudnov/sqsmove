@@ -9,26 +9,38 @@ import java.io.File
 /**
  * Serial SQS Move
  */
-final class SerialSqs(maxConcurrency: Int, visibilityTimeout: Duration, isDelete: Boolean) extends BasicSqs(maxConcurrency):
+final class SerialSqs(maxConcurrency: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean) extends BasicSqs(maxConcurrency):
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
-    ZIO
-      .succeed(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds))
-      .flatMap(r => receiveBatch(r))
-      .flatMap(b => sendBatch(dstQueueUrl, b).flatMap(b => deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).when(b.nonEmpty))
-      .forever
+    for
+      nRef <- ZRef.make(limit.getOrElse(Int.MaxValue))
+      _ <- (for
+             n <- nRef.get
+             sz = math.min(AwsSqs.maxBatchSize, n)
+             r <- ZIO.attempt(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = sz))
+             b <- receiveBatch(r)
+             _ <- sendBatch(dstQueueUrl, b).flatMap(b => deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).when(b.nonEmpty)
+             k <- nRef.updateAndGet(_ - b.size)
+           yield k).repeatWhile(_ > 0)
+    yield ()
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] =
-    ZIO
-      .succeed(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds))
-      .flatMap(r => receiveBatch(r))
-      .flatMap(b => saveBatch(dstDir, b).flatMap(b => deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).when(b.nonEmpty))
-      .forever
+    for
+      nRef <- ZRef.make(limit.getOrElse(Int.MaxValue))
+      _ <- (for
+             n <- nRef.get
+             sz = math.min(AwsSqs.maxBatchSize, n)
+             r <- ZIO.attempt(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = sz))
+             b <- receiveBatch(r)
+             _ <- saveBatch(dstDir, b).flatMap(b => deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).when(b.nonEmpty)
+             k <- nRef.updateAndGet(_ - b.size)
+           yield k).repeatWhile(_ > 0)
+    yield ()
 
   override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZIO
       .fromEither(BasicSqs.listFilesWithoutMetadata(srcDir))
-      .map(_.grouped(AwsSqs.receiveMaxNumberOfMessages).toList)
+      .map(_.grouped(AwsSqs.maxBatchSize).take(limit.fold(Int.MaxValue)(identity)).toList)
       .flatMap(chunkedFiles =>
         ZIO.foreach(chunkedFiles)(chunk =>
           ZIO
@@ -39,5 +51,5 @@ final class SerialSqs(maxConcurrency: Int, visibilityTimeout: Duration, isDelete
       .unit
 
 object SerialSqs:
-  def layer(maxConcurrency: Int, visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Any, Throwable, Has[Sqs]] =
-    ZIO.attempt(new SerialSqs(maxConcurrency = maxConcurrency, visibilityTimeout = visibilityTimeout, isDelete = isDelete)).toLayer
+  def layer(maxConcurrency: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Any, Throwable, Has[Sqs]] =
+    ZIO.attempt(new SerialSqs(maxConcurrency = maxConcurrency, limit = limit, visibilityTimeout = visibilityTimeout, isDelete = isDelete)).toLayer

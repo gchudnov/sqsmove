@@ -36,7 +36,7 @@ mv "${REFLECT_CONFIG_FILE}.bak" "${REFLECT_CONFIG_FILE}"
 
 After building with `native-image`, the files:
 
-```
+```text
 -H:JNIConfigurationResources=META-INF/native-image/jni-config.json \
 -H:ReflectionConfigurationResources=META-INF/native-image/reflect-config.json \
 -H:ResourceConfigurationResources=META-INF/native-image/resource-config.json \

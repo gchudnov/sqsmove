@@ -47,6 +47,7 @@ object SqsMove extends ZIOAppDefault:
       dstQueueUrl <- getQueueUrl(dstQueueName)
       _           <- monitor()
       _           <- move(srcQueueUrl, dstQueueUrl)
+      _           <- summary()
     yield ()
 
   private def makeDownloadProgram(srcQueueName: String, dstDir: File): ZIO[Has[Sqs] with Has[Clock] with Has[Console], Throwable, Unit] =
@@ -54,6 +55,7 @@ object SqsMove extends ZIOAppDefault:
       srcQueueUrl <- getQueueUrl(srcQueueName)
       _           <- monitor()
       _           <- download(srcQueueUrl, dstDir)
+      _           <- summary()
     yield ()
 
   private def makeUploadProgram(srcDir: File, dstQueueName: String): ZIO[Has[Sqs] with Has[Clock] with Has[Console], Throwable, Unit] =
@@ -75,9 +77,9 @@ object SqsMove extends ZIOAppDefault:
   private def makeEnv(cfg: SqsConfig): ZLayer[Has[Clock], Throwable, Has[Sqs]] =
     val clockEnv = Clock.any
     val copyEnv = cfg.parallelism match
-      case 0 => AutoSqs.layer(maxConcurrency = sqsMaxConcurrency, initParallelism = 1, visibilityTimeout = cfg.visibilityTimeout, isDelete = cfg.isDelete)
-      case 1 => SerialSqs.layer(maxConcurrency = sqsMaxConcurrency, visibilityTimeout = cfg.visibilityTimeout, isDelete = cfg.isDelete)
-      case m => ParallelSqs.layer(maxConcurrency = sqsMaxConcurrency, parallelism = m, visibilityTimeout = cfg.visibilityTimeout, isDelete = cfg.isDelete)
+      case 0 => AutoSqs.layer(maxConcurrency = sqsMaxConcurrency, initParallelism = 1, limit = cfg.count, visibilityTimeout = cfg.visibilityTimeout, isDelete = cfg.isDelete)
+      case 1 => SerialSqs.layer(maxConcurrency = sqsMaxConcurrency, limit = cfg.count, visibilityTimeout = cfg.visibilityTimeout, isDelete = cfg.isDelete)
+      case m => ParallelSqs.layer(maxConcurrency = sqsMaxConcurrency, parallelism = m, limit = cfg.count, visibilityTimeout = cfg.visibilityTimeout, isDelete = cfg.isDelete)
     val appEnv = clockEnv >>> copyEnv
 
     appEnv
@@ -92,8 +94,9 @@ object SqsMove extends ZIOAppDefault:
     val pMsg        = s"parallelism: ${cfg.parallelism}"
     val vMsg        = if isSrcDir then "" else s"visibility-timeout: ${DurationOps.asString(cfg.visibilityTimeout)}"
     val dMsg        = if isSrcDir then "" else s"no-delete: ${!cfg.isDelete}"
+    val cMsg        = cfg.count.fold("")(n => s"${n} ")
     val paramsMsg   = List(pMsg, vMsg, dMsg).filter(_.nonEmpty).mkString("; ")
-    val msg = s"""Going to ${action} messages '${source}' -> '${destination}'
+    val msg = s"""Going to ${action} ${cMsg}messages '${source}' -> '${destination}'
                  |[${paramsMsg}]
                  |Are you sure? (y|N)""".stripMargin
     for
