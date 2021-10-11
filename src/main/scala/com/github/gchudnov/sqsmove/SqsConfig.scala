@@ -117,7 +117,7 @@ object SqsConfig:
         .valueName("<value>")
         .validate(n => if n > 0 then Right(()) else Left(s"$ArgCountLong should be greater than 0"))
         .action((x, c) => c.copy(count = Some(x)))
-        .text(s"count (default: ${SqsArgs.DefaultCount.fold("no limit")(x => "${x}")})"),
+        .text(s"number of messages to process (default: ${SqsArgs.DefaultCount.fold("no limit")(x => "${x}")})"),
       opt[String](ArgVisibilityTimeoutLong)
         .optional()
         .valueName("<value>")

@@ -17,7 +17,7 @@ $ sqsmove --help
 ```
 
 ```text
-sqsmove 1.1.0
+sqsmove 1.2.0
 Usage: sqsmove [options]
 
   -s, --src-queue <name>   source queue name
@@ -26,6 +26,7 @@ Usage: sqsmove [options]
   --dst-dir <path>         destination directory path
   -p, --parallelism <value>
                            parallelism (default: 16)
+  -c, --count <value>      number of messages to process (default: no limit)
   --visibility-timeout <value>
                            visibility timeout (default: 30s). Format: 1d12h35m16s
   --no-delete              do not delete messages after processing
@@ -33,6 +34,26 @@ Usage: sqsmove [options]
   -v, --verbose            verbose output
   -h, --help               prints this usage text
   --version                prints the version
+
+Examples:
+
+  - Move messages from queue A to queue B:
+    sqsmove -s A -d B
+
+  - Move messages from queue A to queue B with parallelism 1:
+    sqsmove -s A -d B -p 1
+
+  - Copy messages from queue A to queue B with visibility timeout 5m:
+    sqsmove -s A -d B --no-delete --visibility-timeout=5m
+
+  - Download messages to directory D:
+    sqsmove -s A --dst-dir D
+
+  - Download N messages to directory D:
+    sqsmove -s A --dst-dir D -c N
+
+  - Upload messages from directory D:
+    sqsmove --src-dir D -d B
 ```
 
 ## Examples
