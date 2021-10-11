@@ -81,6 +81,12 @@ binAttr,Binary,QUJD
 
 The supported types are `String`, `Number` and `Binary` where binary data is encoded as a Base64 string.
 
+**Download N messages to directory D:**
+
+```bash
+sqsmove -s A --dst-dir D -c N
+```
+
 **Upload messages from directory D:**
 
 ```bash

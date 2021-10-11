@@ -19,6 +19,7 @@ final case class SqsArgs(
   srcDir: Option[File],
   dstDir: Option[File],
   parallelism: Int,
+  count: Option[Int],
   visibilityTimeout: String,
   isDelete: Boolean,
   isAsk: Boolean,
@@ -27,11 +28,12 @@ final case class SqsArgs(
 
 object SqsArgs:
 
-  private[sqsmove] val DefaultParallelism       = 16
-  private[sqsmove] val DefaultVisibilityTimeout = "30s" // 30 seconds
-  private[sqsmove] val DefaultDelete            = true
-  private[sqsmove] val DefaultAsk               = true
-  private[sqsmove] val DefaultVerbose           = false
+  private[sqsmove] val DefaultParallelism: Int          = 16
+  private[sqsmove] val DefaultCount: Option[Int]        = None
+  private[sqsmove] val DefaultVisibilityTimeout: String = "30s" // 30 seconds
+  private[sqsmove] val DefaultDelete: Boolean           = true
+  private[sqsmove] val DefaultAsk: Boolean              = true
+  private[sqsmove] val DefaultVerbose: Boolean          = false
 
   def empty: SqsArgs = SqsArgs(
     srcQueueName = None,
@@ -39,6 +41,7 @@ object SqsArgs:
     srcDir = None,
     dstDir = None,
     parallelism = DefaultParallelism,
+    count = DefaultCount,
     visibilityTimeout = DefaultVisibilityTimeout,
     isDelete = DefaultDelete,
     isAsk = DefaultAsk,
@@ -49,6 +52,7 @@ final case class SqsConfig(
   source: Either[String, File],
   destination: Either[String, File],
   parallelism: Int,
+  count: Option[Int],
   visibilityTimeout: Duration,
   isDelete: Boolean,
   isAsk: Boolean,
@@ -67,6 +71,8 @@ object SqsConfig:
   private val ArgDstDirLong            = "dst-dir"
   private val ArgParallelismShort      = 'p'
   private val ArgParallelismLong       = "parallelism"
+  private val ArgCountShort            = 'c'
+  private val ArgCountLong             = "count"
   private val ArgVisibilityTimeoutLong = "visibility-timeout"
   private val ArgNoDeleteLong          = "no-delete"
   private val ArgNoAskLong             = "yes"
@@ -103,9 +109,15 @@ object SqsConfig:
       opt[Int](ArgParallelismShort, ArgParallelismLong)
         .optional()
         .valueName("<value>")
-        .validate(n => if n >= 0 then Right(()) else Left(s"$ArgParallelismLong cannot be negative"))
+        .validate(n => if n > 0 then Right(()) else Left(s"$ArgParallelismLong should be greater than 0"))
         .action((x, c) => c.copy(parallelism = x))
         .text(s"parallelism (default: ${SqsArgs.DefaultParallelism})"),
+      opt[Int](ArgCountShort, ArgCountLong)
+        .optional()
+        .valueName("<value>")
+        .validate(n => if n > 0 then Right(()) else Left(s"$ArgCountLong should be greater than 0"))
+        .action((x, c) => c.copy(count = Some(x)))
+        .text(s"count (default: ${SqsArgs.DefaultCount.fold("no limit")(x => "${x}")})"),
       opt[String](ArgVisibilityTimeoutLong)
         .optional()
         .valueName("<value>")
@@ -147,6 +159,9 @@ object SqsConfig:
              |  - Download messages to directory D:
              |    sqsmove -s A --dst-dir D
              |
+             |  - Download N messages to directory D:
+             |    sqsmove -s A --dst-dir D -c N
+             |
              |  - Upload messages from directory D:
              |    sqsmove --src-dir D -d B
              |""".stripMargin),
@@ -177,6 +192,7 @@ object SqsConfig:
                       source = source,
                       destination = destination,
                       parallelism = aConfig.parallelism,
+                      count = aConfig.count,
                       visibilityTimeout = visibilityTimeout,
                       isDelete = aConfig.isDelete,
                       isAsk = aConfig.isAsk,

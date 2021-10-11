@@ -1,6 +1,7 @@
 package com.github.gchudnov.sqsmove.sqs
 
 import com.github.gchudnov.sqsmove.sqs.AwsSqs.makeReceiveRequest
+import software.amazon.awssdk.services.sqs.model.Message
 import zio.*
 import zio.stream.ZStream
 import java.io.File
@@ -8,37 +9,58 @@ import java.io.File
 /**
  * Parallel SQS Move
  */
-final class ParallelSqs(maxConcurrency: Int, parallelism: Int, visibilityTimeout: Duration, isDelete: Boolean) extends BasicSqs(maxConcurrency):
+final class ParallelSqs(maxConcurrency: Int, parallelism: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean, clock: Clock) extends BasicSqs(maxConcurrency):
   import BasicSqs.*
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZStream
-      .repeat(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds))
+      .unfold(limit)({
+        case None => Some(AwsSqs.maxBatchSize, None)
+        case Some(x) if x > 0 => Some(math.min(x, AwsSqs.maxBatchSize), Some(x - AwsSqs.maxBatchSize))
+        case _ => None
+      })
+      .map(n => makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = n))
       .mapZIOPar(parallelism)(r => receiveBatch(r))
+      .mapConcat(identity)
+      .via(withOptionalLimit)
+      .groupedWithin(AwsSqs.maxBatchSize, ParallelSqs.waitBatch)
       .filter(_.nonEmpty)
       .mapZIOPar(parallelism)(b => sendBatch(dstQueueUrl, b))
-      .filter(_.nonEmpty)
       .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).unit)
       .runDrain
+      .provideLayer(ZLayer.succeed(clock))
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] =
     ZStream
-      .repeat(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds))
+      .repeat(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, limit = limit))
       .mapZIOPar(parallelism)(r => receiveBatch(r))
+      .mapConcat(identity)
+      .via(withOptionalLimit)
+      .groupedWithin(AwsSqs.maxBatchSize, ParallelSqs.waitBatch)
       .filter(_.nonEmpty)
       .mapZIOPar(parallelism)(b => saveBatch(dstDir, b))
-      .filter(_.nonEmpty)
       .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).unit)
       .runDrain
+      .provideLayer(ZLayer.succeed(clock))
 
   override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZStream
       .fromIterableZIO(ZIO.fromEither(BasicSqs.listFilesWithoutMetadata(srcDir)))
-      .grouped(AwsSqs.receiveMaxNumberOfMessages)
+      .via(withOptionalLimit)
+      .grouped(AwsSqs.maxBatchSize)
       .filter(_.nonEmpty)
       .mapZIOPar(parallelism)(b => ZIO.foreach(b)(messageFromFile).flatMap(b => sendBatch(dstQueueUrl, b).as(b.size) @@ countMessages))
       .runDrain
+      .provideLayer(ZLayer.succeed(clock))
+
+  private def withOptionalLimit[R, T](in: ZStream[R, Throwable, T]): ZStream[R, Throwable, T] =
+    limit.map(n => in.take(n)).getOrElse(in)
 
 object ParallelSqs:
-  def layer(maxConcurrency: Int, parallelism: Int, visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Any, Throwable, Has[Sqs]] =
-    ZIO.attempt(new ParallelSqs(maxConcurrency = maxConcurrency, parallelism = parallelism, visibilityTimeout = visibilityTimeout, isDelete = isDelete)).toLayer
+
+  def layer(maxConcurrency: Int, parallelism: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Has[Clock], Throwable, Has[Sqs]] = (for
+    clock  <- ZIO.service[Clock]
+    service = new ParallelSqs(maxConcurrency = maxConcurrency, parallelism = parallelism, limit = limit, visibilityTimeout = visibilityTimeout, isDelete = isDelete, clock = clock)
+  yield service).toLayer
+
+  val waitBatch: Duration = Duration.fromMillis(AwsSqs.waitBatchMillis)
