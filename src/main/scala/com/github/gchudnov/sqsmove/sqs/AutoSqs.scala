@@ -41,12 +41,13 @@ final class AutoSqs(maxConcurrency: Int, initParallelism: Int, limit: Option[Int
       psRef <- ZRef.make(List.empty[StopPromise]) // active producers
       dsRef <- ZRef.make(List.empty[StopPromise]) // active deleters
 
-      f0 <- scaleWorkers(cName, cRef, csRef)(
-              newConsumer(cName, csRef)(messages, receiveBatch(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = AwsSqs.maxBatchSize)))
-            )
-              .schedule(Schedule.spaced(autoUpdateTime))
-              .unit
-              .fork
+      f0 <-
+        scaleWorkers(cName, cRef, csRef)(
+          newConsumer(cName, csRef)(messages, receiveBatch(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = AwsSqs.maxBatchSize)))
+        )
+          .schedule(Schedule.spaced(autoUpdateTime))
+          .unit
+          .fork
       f1 <- scaleWorkers(pName, pRef, psRef)(newProducer(pName, psRef)(messages, handles, sendBatch(dstQueueUrl, _)))
               .schedule(Schedule.spaced(autoUpdateTime))
               .unit
@@ -137,6 +138,7 @@ final class AutoSqs(maxConcurrency: Int, initParallelism: Int, limit: Option[Int
 
 object AutoSqs:
   def layer(maxConcurrency: Int, initParallelism: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Has[Clock], Throwable, Has[Sqs]] = (for
-    clock  <- ZIO.service[Clock]
-    service = new AutoSqs(maxConcurrency = maxConcurrency, initParallelism = initParallelism, limit = limit, visibilityTimeout = visibilityTimeout, isDelete = isDelete, clock = clock)
+    clock <- ZIO.service[Clock]
+    service =
+      new AutoSqs(maxConcurrency = maxConcurrency, initParallelism = initParallelism, limit = limit, visibilityTimeout = visibilityTimeout, isDelete = isDelete, clock = clock)
   yield service).toLayer

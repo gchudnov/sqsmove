@@ -12,18 +12,30 @@ import java.io.File
 final class SerialSqs(maxConcurrency: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean) extends BasicSqs(maxConcurrency):
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
-    ZIO
-      .succeed(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = AwsSqs.maxBatchSize))
-      .flatMap(r => receiveBatch(r))
-      .flatMap(b => sendBatch(dstQueueUrl, b).flatMap(b => deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).when(b.nonEmpty))
-      .forever
+    for
+      nRef <- ZRef.make(limit.getOrElse(Int.MaxValue))
+      _ <- (for
+             n <- nRef.get
+             sz = math.min(AwsSqs.maxBatchSize, n)
+             r <- ZIO.attempt(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = sz))
+             b <- receiveBatch(r)
+             _ <- sendBatch(dstQueueUrl, b).flatMap(b => deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).when(b.nonEmpty)
+             k <- nRef.updateAndGet(_ - b.size)
+           yield k).repeatUntil(_ > 0)
+    yield ()
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] =
-    ZIO
-      .succeed(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = AwsSqs.maxBatchSize))
-      .flatMap(r => receiveBatch(r))
-      .flatMap(b => saveBatch(dstDir, b).flatMap(b => deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).when(b.nonEmpty))
-      .forever
+    for
+      nRef <- ZRef.make(limit.getOrElse(Int.MaxValue))
+      _ <- (for
+             n <- nRef.get
+             sz = math.min(AwsSqs.maxBatchSize, n)
+             r <- ZIO.attempt(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = sz))
+             b <- receiveBatch(r)
+             _ <- saveBatch(dstDir, b).flatMap(b => deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).when(b.nonEmpty)
+             k <- nRef.updateAndGet(_ - b.size)
+           yield k).repeatUntil(_ > 0)
+    yield ()
 
   override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZIO
