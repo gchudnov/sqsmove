@@ -21,7 +21,7 @@ final class SerialSqs(maxConcurrency: Int, limit: Option[Int], visibilityTimeout
              b <- receiveBatch(r)
              _ <- sendBatch(dstQueueUrl, b).flatMap(b => deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).when(b.nonEmpty)
              k <- nRef.updateAndGet(_ - b.size)
-           yield k).repeatUntil(_ > 0)
+           yield k).repeatWhile(_ > 0)
     yield ()
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] =
@@ -34,7 +34,7 @@ final class SerialSqs(maxConcurrency: Int, limit: Option[Int], visibilityTimeout
              b <- receiveBatch(r)
              _ <- saveBatch(dstDir, b).flatMap(b => deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).when(b.nonEmpty)
              k <- nRef.updateAndGet(_ - b.size)
-           yield k).repeatUntil(_ > 0)
+           yield k).repeatWhile(_ > 0)
     yield ()
 
   override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
