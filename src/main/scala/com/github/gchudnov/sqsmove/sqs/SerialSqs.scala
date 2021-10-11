@@ -13,14 +13,14 @@ final class SerialSqs(maxConcurrency: Int, limit: Option[Int], visibilityTimeout
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZIO
-      .succeed(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, limit = limit))
+      .succeed(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = AwsSqs.maxBatchSize))
       .flatMap(r => receiveBatch(r))
       .flatMap(b => sendBatch(dstQueueUrl, b).flatMap(b => deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).when(b.nonEmpty))
       .forever
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] =
     ZIO
-      .succeed(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, limit = limit))
+      .succeed(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = AwsSqs.maxBatchSize))
       .flatMap(r => receiveBatch(r))
       .flatMap(b => saveBatch(dstDir, b).flatMap(b => deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).when(b.nonEmpty))
       .forever
@@ -28,7 +28,7 @@ final class SerialSqs(maxConcurrency: Int, limit: Option[Int], visibilityTimeout
   override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZIO
       .fromEither(BasicSqs.listFilesWithoutMetadata(srcDir))
-      .map(_.grouped(AwsSqs.maxBatchSize).toList)
+      .map(_.grouped(AwsSqs.maxBatchSize).take(limit.fold(Int.MaxValue)(identity)).toList)
       .flatMap(chunkedFiles =>
         ZIO.foreach(chunkedFiles)(chunk =>
           ZIO

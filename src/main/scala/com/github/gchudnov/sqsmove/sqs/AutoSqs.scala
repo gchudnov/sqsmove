@@ -42,7 +42,7 @@ final class AutoSqs(maxConcurrency: Int, initParallelism: Int, limit: Option[Int
       dsRef <- ZRef.make(List.empty[StopPromise]) // active deleters
 
       f0 <- scaleWorkers(cName, cRef, csRef)(
-              newConsumer(cName, csRef)(messages, receiveBatch(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, limit = limit)))
+              newConsumer(cName, csRef)(messages, receiveBatch(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = AwsSqs.maxBatchSize)))
             )
               .schedule(Schedule.spaced(autoUpdateTime))
               .unit

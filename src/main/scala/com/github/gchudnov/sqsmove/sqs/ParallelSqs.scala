@@ -14,12 +14,7 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int, limit: Option[Int
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZStream
-      .unfold(limit)({
-        case None => Some(AwsSqs.maxBatchSize, None)
-        case Some(x) if x > 0 => Some(math.min(x, AwsSqs.maxBatchSize), Some(x - AwsSqs.maxBatchSize))
-        case _ => None
-      })
-      .map(n => makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = n))
+      .repeat(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = AwsSqs.maxBatchSize))
       .mapZIOPar(parallelism)(r => receiveBatch(r))
       .mapConcat(identity)
       .via(withOptionalLimit)
@@ -32,7 +27,7 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int, limit: Option[Int
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] =
     ZStream
-      .repeat(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, limit = limit))
+      .repeat(makeReceiveRequest(srcQueueUrl, visibilityTimeoutSec = visibilityTimeout.getSeconds, batchSize = AwsSqs.maxBatchSize))
       .mapZIOPar(parallelism)(r => receiveBatch(r))
       .mapConcat(identity)
       .via(withOptionalLimit)
