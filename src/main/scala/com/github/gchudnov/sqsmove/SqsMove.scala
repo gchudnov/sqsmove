@@ -47,6 +47,7 @@ object SqsMove extends ZIOAppDefault:
       dstQueueUrl <- getQueueUrl(dstQueueName)
       _           <- monitor()
       _           <- move(srcQueueUrl, dstQueueUrl)
+      _           <- summary()      
     yield ()
 
   private def makeDownloadProgram(srcQueueName: String, dstDir: File): ZIO[Has[Sqs] with Has[Clock] with Has[Console], Throwable, Unit] =
@@ -54,6 +55,7 @@ object SqsMove extends ZIOAppDefault:
       srcQueueUrl <- getQueueUrl(srcQueueName)
       _           <- monitor()
       _           <- download(srcQueueUrl, dstDir)
+      _           <- summary()      
     yield ()
 
   private def makeUploadProgram(srcDir: File, dstQueueName: String): ZIO[Has[Sqs] with Has[Clock] with Has[Console], Throwable, Unit] =
