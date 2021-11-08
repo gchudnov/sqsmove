@@ -1,4 +1,4 @@
-addSbtPlugin("ch.epfl.scala"      % "sbt-version-policy"        % "2.0.0")
+addSbtPlugin("ch.epfl.scala"      % "sbt-version-policy"        % "2.0.1")
 addSbtPlugin("com.eed3si9n"       % "sbt-assembly"              % "1.1.0")
 addSbtPlugin("com.eed3si9n"       % "sbt-buildinfo"             % "0.10.0")
 addSbtPlugin("com.github.cb372"   % "sbt-explicit-dependencies" % "0.2.16")

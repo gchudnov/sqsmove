@@ -24,7 +24,7 @@ object SqsMove extends ZIOAppDefault:
     val psetup: OParserSetup                                        = makePEffectSetup()
 
     val program = for
-      as  <- args
+      as  <- getArgs
       cfg <- SqsConfig.fromArgs(as.toList)(psetup).provideSomeLayer[Has[Console]](osetup)
       env  = makeEnv(cfg)
       _   <- ask(cfg).when(cfg.isAsk)

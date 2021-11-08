@@ -3,11 +3,11 @@ import sbt._
 object Dependencies {
 
   object versions {
-    val awsSdk        = "2.17.56"
+    val awsSdk        = "2.17.77"
     val kindProjector = "0.10.3"
     val logback       = "1.2.6"
     val scopt         = "4.0.1"
-    val zio           = "2.0.0-M3"
+    val zio           = "2.0.0-M4"
     val scalaCsv      = "1.3.8"
   }
 
