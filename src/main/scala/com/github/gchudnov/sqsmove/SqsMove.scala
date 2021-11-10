@@ -17,7 +17,7 @@ import java.lang.System as JSystem
 
 object SqsMove extends ZIOAppDefault:
 
-  private val sqsMaxConcurrency: Int = 512
+  private val sqsMaxConcurrency: Int = 1024
 
   override def run: ZIO[Environment with ZEnv with Has[ZIOAppArgs], Any, Any] =
     val osetup: ZLayer[Has[Console], Throwable, Has[OZEffectSetup]] = makeOZEffectSetup()
