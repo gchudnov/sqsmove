@@ -121,7 +121,7 @@ object SqsConfig:
       opt[String](ArgVisibilityTimeoutLong)
         .optional()
         .valueName("<value>")
-        .validate(x => DurationOps.ensure(x).left.map(_.getMessage))
+        .validate(x => DurationOps.ensureDuration(x).left.map(_.getMessage))
         .action((x, c) => c.copy(visibilityTimeout = x))
         .text(s"visibility timeout (default: ${SqsArgs.DefaultVisibilityTimeout}). Format: 1d12h35m16s"),
       opt[Unit](ArgNoDeleteLong)
@@ -177,30 +177,30 @@ object SqsConfig:
   private val OEffectHelpKey    = s"$OEffectPrefix:HELP"
   private val OEffectVersionKey = s"$OEffectPrefix:VERSION"
 
-  def fromArgs(args: List[String])(argParserSetup: OParserSetup): RIO[Has[OZEffectSetup], SqsConfig] =
+  def fromArgs(args: List[String])(argParserSetup: OParserSetup): RIO[OZEffectSetup, SqsConfig] =
     OParser.runParser(argsParser, args, SqsArgs.empty, argParserSetup) match
       case (result, effects) =>
         for
           pEffects <- preprocessOEffects(effects)
           _        <- runOEffects(pEffects)
-          aConfig  <- ZIO.fromOption(result).orElseFail(new IllegalArgumentException(s"Use --$ArgHelpLong for more information."))
+          argsConf <- ZIO.fromOption(result).orElseFail(new IllegalArgumentException(s"Use --$ArgHelpLong for more information."))
           config <- (for
-                      source            <- queueOrDir(aConfig.srcQueueName, aConfig.srcDir)("source")
-                      destination       <- queueOrDir(aConfig.dstQueueName, aConfig.dstDir)("destination")
-                      visibilityTimeout <- ZIO.fromEither(DurationOps.parse(aConfig.visibilityTimeout))
+                      source            <- queueOrDir(argsConf.srcQueueName, argsConf.srcDir)("source")
+                      destination       <- queueOrDir(argsConf.dstQueueName, argsConf.dstDir)("destination")
+                      visibilityTimeout <- ZIO.fromEither(DurationOps.parseDuration(argsConf.visibilityTimeout))
                     yield SqsConfig(
                       source = source,
                       destination = destination,
-                      parallelism = aConfig.parallelism,
-                      count = aConfig.count,
+                      parallelism = argsConf.parallelism,
+                      count = argsConf.count,
                       visibilityTimeout = visibilityTimeout,
-                      isDelete = aConfig.isDelete,
-                      isAsk = aConfig.isAsk,
-                      isVerbose = aConfig.isVerbose
+                      isDelete = argsConf.isDelete,
+                      isAsk = argsConf.isAsk,
+                      isVerbose = argsConf.isVerbose
                     ))
         yield config
 
-  private def preprocessOEffects(effects: List[OEffect]): RIO[Has[OZEffectSetup], List[OEffect]] =
+  private def preprocessOEffects(effects: List[OEffect]): RIO[OZEffectSetup, List[OEffect]] =
     val hasHelp    = hasKey(OEffectHelpKey)(effects)
     val hasVersion = hasKey(OEffectVersionKey)(effects)
 

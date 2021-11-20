@@ -22,8 +22,7 @@ object ArrayOpsSpec extends DefaultRunnableSpec:
       assert(actual)(equalTo(Right(expected)))
     },
     test("when an invalid base64 string is decoded, return an error") {
-      val input    = "1"
-      val expected = "ABC"
+      val input = "1"
 
       val actual = base64ToBytes(input)
       assert(actual.isLeft)(equalTo(true))

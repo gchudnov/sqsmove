@@ -21,7 +21,7 @@ object CsvOpsSpec extends DefaultRunnableSpec:
                        |binAttr,Binary,QUJD
                        |""".stripMargin
 
-      assert(actual)(equalTo(expected))
+      assert(actual)(equalTo(Right(expected)))
     },
     test("if a cell has special characters, it is escaped") {
       val t = List(
@@ -33,7 +33,7 @@ object CsvOpsSpec extends DefaultRunnableSpec:
                        |strAttr,String,"{ ""k1: ""v1"", ""k2: ""v2"" }"
                        |""".stripMargin
 
-      assert(actual)(equalTo(expected))
+      assert(actual)(equalTo(Right(expected)))
     },
     test("CSV string can be deserialized to a table") {
       val data = """name,type,value

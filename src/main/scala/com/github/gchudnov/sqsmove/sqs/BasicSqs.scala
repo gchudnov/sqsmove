@@ -74,7 +74,7 @@ abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
         filePath <- ZIO.attempt(Paths.get(dstDir.getAbsolutePath, m.messageId))
         _        <- ZIO.fromEither(FileOps.saveString(filePath.toFile, m.body))
         attrMap   = m.messageAttributes.asScala.toMap
-        meta      = CsvOps.tableToString(attrsToTable(attrMap))
+        meta     <- ZIO.fromEither(CsvOps.tableToString(attrsToTable(attrMap)))
         _        <- ZIO.fromEither(FileOps.saveString(FileOps.replaceExtension(filePath.toFile, BasicSqs.extMeta), meta)).when(attrMap.nonEmpty)
       yield m.receiptHandle
     )
@@ -91,13 +91,13 @@ object BasicSqs:
 
   private val monitorDuration = 1.second
 
-  def summary(): ZIO[Has[Console] with Has[Clock], IOException, Unit] =
+  def summary(): ZIO[Console with Clock, IOException, Unit] =
     for
       cCount <- countMessages.count
       _      <- Clock.currentDateTime.flatMap(dt => printLine(s"[$dt] SQS messages processed: ${cCount.toInt}"))
     yield ()
 
-  def monitor(): ZIO[Has[Console] with Has[Clock], Nothing, Fiber.Runtime[IOException, Long]] =
+  def monitor(): ZIO[Console with Clock, Nothing, Fiber.Runtime[IOException, Long]] =
     val schedulePolicy = Schedule.spaced(monitorDuration)
 
     val iteration = (mRef: Ref[Double]) =>

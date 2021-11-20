@@ -5,6 +5,7 @@ import software.amazon.awssdk.services.sqs.model.Message
 import zio.*
 import zio.stream.ZStream
 import java.io.File
+import zio.stream.ZPipeline
 
 /**
  * Parallel SQS Move
@@ -23,7 +24,7 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int, limit: Option[Int
       .mapZIOPar(parallelism)(b => sendBatch(dstQueueUrl, b))
       .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).unit)
       .runDrain
-      .provideLayer(ZLayer.succeed(clock))
+      .provide(ZLayer.succeed(clock))
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] =
     ZStream
@@ -36,7 +37,7 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int, limit: Option[Int
       .mapZIOPar(parallelism)(b => saveBatch(dstDir, b))
       .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).unit)
       .runDrain
-      .provideLayer(ZLayer.succeed(clock))
+      .provide(ZLayer.succeed(clock))
 
   override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZStream
@@ -46,14 +47,14 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int, limit: Option[Int
       .filter(_.nonEmpty)
       .mapZIOPar(parallelism)(b => ZIO.foreach(b)(messageFromFile).flatMap(b => sendBatch(dstQueueUrl, b).as(b.size) @@ countMessages))
       .runDrain
-      .provideLayer(ZLayer.succeed(clock))
+      .provide(ZLayer.succeed(clock))
 
-  private def withOptionalLimit[R, T](in: ZStream[R, Throwable, T]): ZStream[R, Throwable, T] =
-    limit.map(n => in.take(n)).getOrElse(in)
+  private def withOptionalLimit =
+    limit.map(n => ZPipeline.take(n)).getOrElse(ZPipeline.identity)
 
 object ParallelSqs:
 
-  def layer(maxConcurrency: Int, parallelism: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Has[Clock], Throwable, Has[Sqs]] = (for
+  def layer(maxConcurrency: Int, parallelism: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Clock, Throwable, Sqs] = (for
     clock  <- ZIO.service[Clock]
     service = new ParallelSqs(maxConcurrency = maxConcurrency, parallelism = parallelism, limit = limit, visibilityTimeout = visibilityTimeout, isDelete = isDelete, clock = clock)
   yield service).toLayer

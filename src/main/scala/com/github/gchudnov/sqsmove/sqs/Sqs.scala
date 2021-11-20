@@ -4,20 +4,20 @@ import zio.*
 import java.io.File
 
 trait Sqs:
-  def getQueueUrl(name: String): ZIO[Any, Throwable, String]
-  def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit]
-  def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit]
-  def upload(srdDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit]
+  def getQueueUrl(name: String): Task[String]
+  def move(srcQueueUrl: String, dstQueueUrl: String): Task[Unit]
+  def download(srcQueueUrl: String, dstDir: File): Task[Unit]
+  def upload(srdDir: File, dstQueueUrl: String): Task[Unit]
 
 object Sqs:
-  def getQueueUrl(name: String): ZIO[Has[Sqs], Throwable, String] =
-    ZIO.serviceWith(_.getQueueUrl(name))
+  def getQueueUrl(name: String): RIO[Sqs, String] =
+    ZIO.serviceWithZIO[Sqs](_.getQueueUrl(name))
 
-  def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Has[Sqs], Throwable, Unit] =
+  def move(srcQueueUrl: String, dstQueueUrl: String): RIO[Sqs, Unit] =
     ZIO.serviceWith(_.move(srcQueueUrl, dstQueueUrl))
 
-  def download(srcQueueUrl: String, dstDir: File): ZIO[Has[Sqs], Throwable, Unit] =
+  def download(srcQueueUrl: String, dstDir: File): RIO[Sqs, Unit] =
     ZIO.serviceWith(_.download(srcQueueUrl, dstDir))
 
-  def upload(srcDir: File, dstQueueUrl: String): ZIO[Has[Sqs], Throwable, Unit] =
+  def upload(srcDir: File, dstQueueUrl: String): RIO[Sqs, Unit] =
     ZIO.serviceWith(_.upload(srcDir, dstQueueUrl))

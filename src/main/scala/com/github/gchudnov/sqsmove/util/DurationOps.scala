@@ -11,7 +11,7 @@ object DurationOps:
   /**
    * Ensure that the string contains a parsable duration
    */
-  def ensure(s: String): Either[Throwable, Unit] =
+  def ensureDuration(s: String): Either[Throwable, Unit] =
     val rx = """\d+[dhms]""".r
     rx.findFirstIn(s) match
       case Some(_) => Right(())
@@ -20,9 +20,9 @@ object DurationOps:
   /**
    * Parses the duration expressed as 1d15h
    */
-  def parse(s: String): Either[Throwable, Duration] =
+  def parseDuration(s: String): Either[Throwable, Duration] =
     for
-      _ <- ensure(s)
+      _ <- ensureDuration(s)
       d <- extract(s, mkRegex('d')).map(Duration(_, TimeUnit.DAYS))
       h <- extract(s, mkRegex('h')).map(Duration(_, TimeUnit.HOURS))
       m <- extract(s, mkRegex('m')).map(Duration(_, TimeUnit.MINUTES))
@@ -45,10 +45,10 @@ object DurationOps:
 
     s"${sd}${sh}${sm}${ss}"
 
-  private def extract(s: String, rx: Regex): Either[Throwable, Int] = allCatch.either {
-    val x = rx.findFirstMatchIn(s).map(_.group(1))
-    rx.findFirstMatchIn(s).map(_.group(1)).map(_.toInt).getOrElse(0)
-  }
+  private def extract(s: String, rx: Regex): Either[Throwable, Int] =
+    allCatch.either {
+      rx.findFirstMatchIn(s).map(_.group(1)).map(_.toInt).getOrElse(0)
+    }
 
   private def mkRegex(c: Char): Regex =
     s"""(\\d+)${c}""".r

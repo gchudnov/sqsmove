@@ -18,13 +18,13 @@ final class AutoSqs(maxConcurrency: Int, initParallelism: Int, limit: Option[Int
   private val autoQueueMaxSize  = 65536
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Nothing, Unit] =
-    moveWithAutoTune(srcQueueUrl, dstQueueUrl).provideLayer(ZLayer.succeed(clock)).unit
+    moveWithAutoTune(srcQueueUrl, dstQueueUrl).provide(ZLayer.succeed(clock)).unit
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] = ???
 
   override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] = ???
 
-  private def moveWithAutoTune(srcQueueUrl: String, dstQueueUrl: String): ZIO[Has[Clock], Nothing, Fiber[Nothing, Unit]] =
+  private def moveWithAutoTune(srcQueueUrl: String, dstQueueUrl: String): ZIO[Clock, Nothing, Fiber[Nothing, Unit]] =
     val cName = "auto-consumer"
     val pName = "auto-producer"
     val dName = "auto-deleter"
@@ -80,7 +80,7 @@ final class AutoSqs(maxConcurrency: Int, initParallelism: Int, limit: Option[Int
     inQueue: Queue[A],
     outQueue: Queue[B],
     runEffect: Chunk[A] => ZIO[Any, Throwable, IndexedSeq[B]]
-  ): ZIO[Has[Clock], Nothing, Fiber.Runtime[Throwable, Unit]] =
+  ): ZIO[Clock, Nothing, Fiber.Runtime[Throwable, Unit]] =
     for
       _ <- ZIO.logDebug(s"[$name] create")
       p <- Promise.make[Option[Throwable], Unit] // promise to cancel
@@ -137,7 +137,7 @@ final class AutoSqs(maxConcurrency: Int, initParallelism: Int, limit: Option[Int
     yield f
 
 object AutoSqs:
-  def layer(maxConcurrency: Int, initParallelism: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Has[Clock], Throwable, Has[Sqs]] = (for
+  def layer(maxConcurrency: Int, initParallelism: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Clock, Throwable, Sqs] = (for
     clock <- ZIO.service[Clock]
     service =
       new AutoSqs(maxConcurrency = maxConcurrency, initParallelism = initParallelism, limit = limit, visibilityTimeout = visibilityTimeout, isDelete = isDelete, clock = clock)

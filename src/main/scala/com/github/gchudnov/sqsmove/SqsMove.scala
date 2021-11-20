@@ -19,29 +19,29 @@ object SqsMove extends ZIOAppDefault:
 
   private val sqsMaxConcurrency: Int = 1024
 
-  override def run: ZIO[Environment with ZEnv with Has[ZIOAppArgs], Any, Any] =
-    val osetup: ZLayer[Has[Console], Throwable, Has[OZEffectSetup]] = makeOZEffectSetup()
-    val psetup: OParserSetup                                        = makePEffectSetup()
+  override def run: ZIO[Environment with ZEnv with ZIOAppArgs, Any, Any] =
+    val osetup: ZLayer[Console, Throwable, OZEffectSetup] = makeOZEffectSetup()
+    val psetup: OParserSetup                              = makePEffectSetup()
 
     val program = for
       as  <- getArgs
-      cfg <- SqsConfig.fromArgs(as.toList)(psetup).provideSomeLayer[Has[Console]](osetup)
+      cfg <- SqsConfig.fromArgs(as.toList)(psetup).provideSome[Console](osetup)
       env  = makeEnv(cfg)
       _   <- ask(cfg).when(cfg.isAsk)
-      _   <- makeProgram(cfg).provideSomeLayer[Has[Clock] with Has[Console]](env)
+      _   <- makeProgram(cfg).provideSome[Clock with Console](env)
     yield ()
 
     program.catchSome { case _: SuccessExitException => ZIO.unit }
       .tapError(t => printLineError(s"Error: ${t.getMessage}"))
 
-  private def makeProgram(cfg: SqsConfig): ZIO[Has[Sqs] with Has[Clock] with Has[Console], Throwable, Unit] =
+  private def makeProgram(cfg: SqsConfig): ZIO[Sqs with Clock with Console, Throwable, Unit] =
     (cfg.source, cfg.destination) match
       case (Left(x), Left(y))   => makeMoveProgram(x, y)
       case (Left(x), Right(y))  => makeDownloadProgram(x, y)
       case (Right(x), Left(y))  => makeUploadProgram(x, y)
       case (Right(x), Right(y)) => ZIO.fail(new RuntimeException("Cannot move files between directories. Use 'mv' command instead."))
 
-  private def makeMoveProgram(srcQueueName: String, dstQueueName: String): ZIO[Has[Sqs] with Has[Clock] with Has[Console], Throwable, Unit] =
+  private def makeMoveProgram(srcQueueName: String, dstQueueName: String): ZIO[Sqs with Clock with Console, Throwable, Unit] =
     for
       srcQueueUrl <- getQueueUrl(srcQueueName)
       dstQueueUrl <- getQueueUrl(dstQueueName)
@@ -50,7 +50,7 @@ object SqsMove extends ZIOAppDefault:
       _           <- summary()
     yield ()
 
-  private def makeDownloadProgram(srcQueueName: String, dstDir: File): ZIO[Has[Sqs] with Has[Clock] with Has[Console], Throwable, Unit] =
+  private def makeDownloadProgram(srcQueueName: String, dstDir: File): ZIO[Sqs with Clock with Console, Throwable, Unit] =
     for
       srcQueueUrl <- getQueueUrl(srcQueueName)
       _           <- monitor()
@@ -58,7 +58,7 @@ object SqsMove extends ZIOAppDefault:
       _           <- summary()
     yield ()
 
-  private def makeUploadProgram(srcDir: File, dstQueueName: String): ZIO[Has[Sqs] with Has[Clock] with Has[Console], Throwable, Unit] =
+  private def makeUploadProgram(srcDir: File, dstQueueName: String): ZIO[Sqs with Clock with Console, Throwable, Unit] =
     for
       dstQueueUrl <- getQueueUrl(dstQueueName)
       _           <- monitor()
@@ -66,7 +66,7 @@ object SqsMove extends ZIOAppDefault:
       _           <- summary()
     yield ()
 
-  private def makeOZEffectSetup(): ZLayer[Has[Console], Nothing, Has[OZEffectSetup]] =
+  private def makeOZEffectSetup(): ZLayer[Console, Nothing, OZEffectSetup] =
     StdioEffectSetup.layer
 
   private def makePEffectSetup(): OParserSetup =
@@ -74,7 +74,7 @@ object SqsMove extends ZIOAppDefault:
       override def errorOnUnknownArgument: Boolean   = false
       override def showUsageOnError: Option[Boolean] = Some(false)
 
-  private def makeEnv(cfg: SqsConfig): ZLayer[Has[Clock], Throwable, Has[Sqs]] =
+  private def makeEnv(cfg: SqsConfig): ZLayer[Clock, Throwable, Sqs] =
     val clockEnv = Clock.any
     val copyEnv = cfg.parallelism match
       case 0 => AutoSqs.layer(maxConcurrency = sqsMaxConcurrency, initParallelism = 1, limit = cfg.count, visibilityTimeout = cfg.visibilityTimeout, isDelete = cfg.isDelete)
@@ -84,7 +84,7 @@ object SqsMove extends ZIOAppDefault:
 
     appEnv
 
-  private def ask(cfg: SqsConfig): ZIO[Has[Console], Throwable, Unit] =
+  private def ask(cfg: SqsConfig): ZIO[Console, Throwable, Unit] =
     val isSrcDir   = cfg.source.isRight
     val isSrcQueue = cfg.source.isLeft
 
