@@ -1,8 +1,8 @@
 package com.github.gchudnov.sqsmove.zopt.ozeffectsetup
 
+import com.github.gchudnov.sqsmove.zopt.{ FailureExitException, SuccessExitException }
 import zio.*
 import zio.Console.*
-import com.github.gchudnov.sqsmove.zopt.{ FailureExitException, SuccessExitException }
 
 class StdioEffectSetup(console: Console) extends OZEffectSetup:
 

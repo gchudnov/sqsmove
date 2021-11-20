@@ -6,9 +6,9 @@ import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.*
 
+import java.util.List as JList
 import scala.collection.immutable.IndexedSeq
 import scala.jdk.CollectionConverters.*
-import java.util.List as JList
 
 object AwsSqs:
   type ReceiptHandle = String

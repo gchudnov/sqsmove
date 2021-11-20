@@ -3,9 +3,9 @@ package com.github.gchudnov.sqsmove.sqs
 import com.github.gchudnov.sqsmove.sqs.AwsSqs.makeReceiveRequest
 import software.amazon.awssdk.services.sqs.model.Message
 import zio.*
-import zio.stream.ZStream
+import zio.stream.{ ZPipeline, ZStream }
+
 import java.io.File
-import zio.stream.ZPipeline
 
 /**
  * Parallel SQS Move

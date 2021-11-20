@@ -1,8 +1,8 @@
 package com.github.gchudnov.sqsmove.zopt.ozeffectsetup
 
-import zio.*
 import scopt.OEffect
 import scopt.OEffect.*
+import zio.*
 
 trait OZEffectSetup:
   def displayToOut(msg: String): Task[Unit]

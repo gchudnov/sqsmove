@@ -1,10 +1,10 @@
 package com.github.gchudnov.sqsmove.util
 
 import zio.*
-import java.util.concurrent.TimeUnit
-import scala.util.matching.Regex
 
+import java.util.concurrent.TimeUnit
 import scala.util.control.Exception.*
+import scala.util.matching.Regex
 
 object DurationOps:
 
@@ -45,9 +45,9 @@ object DurationOps:
 
     s"${sd}${sh}${sm}${ss}"
 
-  private def extract(s: String, rx: Regex): Either[Throwable, Int] =
+  private def extract(s: String, rx: Regex): Either[Throwable, Long] =
     allCatch.either {
-      rx.findFirstMatchIn(s).map(_.group(1)).map(_.toInt).getOrElse(0)
+      rx.findFirstMatchIn(s).map(_.group(1)).map(_.toLong).getOrElse(0L)
     }
 
   private def mkRegex(c: Char): Regex =

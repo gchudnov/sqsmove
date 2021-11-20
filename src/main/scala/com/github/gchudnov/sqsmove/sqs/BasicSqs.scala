@@ -1,19 +1,16 @@
 package com.github.gchudnov.sqsmove.sqs
 
+import com.github.gchudnov.sqsmove.util.{ ArrayOps, CsvOps, DirOps, FileOps }
+import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.{ GetQueueUrlRequest, Message, MessageAttributeValue, ReceiveMessageRequest }
-import software.amazon.awssdk.core.SdkBytes
 import zio.*
 import zio.Console.*
 
 import java.io.{ File, IOException }
+import java.nio.file.Paths
 import scala.collection.immutable.IndexedSeq
 import scala.jdk.CollectionConverters.*
-import com.github.gchudnov.sqsmove.util.FileOps
-import com.github.gchudnov.sqsmove.util.CsvOps
-import com.github.gchudnov.sqsmove.util.ArrayOps
-import com.github.gchudnov.sqsmove.util.DirOps
-import java.nio.file.Paths
 import scala.util.control.Exception.*
 
 /**

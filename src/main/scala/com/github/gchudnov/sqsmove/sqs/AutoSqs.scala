@@ -3,8 +3,8 @@ package com.github.gchudnov.sqsmove.sqs
 import software.amazon.awssdk.services.sqs.model.Message
 import zio.*
 import zio.stream.ZStream
-import java.io.File
 
+import java.io.File
 import scala.collection.immutable.IndexedSeq
 
 final class AutoSqs(maxConcurrency: Int, initParallelism: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean, clock: Clock) extends BasicSqs(maxConcurrency):

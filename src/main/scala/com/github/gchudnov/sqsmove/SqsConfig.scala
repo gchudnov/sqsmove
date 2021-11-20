@@ -1,14 +1,15 @@
 package com.github.gchudnov.sqsmove
 
+import com.github.gchudnov.sqsmove.BuildInfo as AppBuildInfo
+import com.github.gchudnov.sqsmove.util.DurationOps
 import com.github.gchudnov.sqsmove.zopt.SuccessExitException
 import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.OZEffectSetup
-import com.github.gchudnov.sqsmove.BuildInfo as AppBuildInfo
+import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.OZEffectSetup.*
 import scopt.OEffect.ReportError
 import scopt.{ OEffect, OParser, OParserSetup }
 import zio.*
+
 import java.io.File
-import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.OZEffectSetup.*
-import com.github.gchudnov.sqsmove.util.DurationOps
 
 /**
  * Intermediate Arguments used on parsing the input Arguments
@@ -161,7 +162,7 @@ object SqsConfig:
              |
              |  - Download N messages to directory D:
              |    sqsmove -s A --dst-dir D -c N
-             |    
+             |
              |  - Download N messages to directory D without deletion:
              |    sqsmove -s A --dst-dir D -c N --no-delete
              |

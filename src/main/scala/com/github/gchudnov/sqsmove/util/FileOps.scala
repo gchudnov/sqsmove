@@ -1,10 +1,7 @@
 package com.github.gchudnov.sqsmove.util
 
-import java.io.File
 import java.io.{ BufferedWriter, File, FileOutputStream, FileWriter }
-import java.nio.file.Files
-import java.nio.file.Path
-
+import java.nio.file.{ Files, Path }
 import scala.io.Source
 import scala.util.Using
 import scala.util.control.Exception.*
