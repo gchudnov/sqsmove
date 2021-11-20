@@ -13,19 +13,19 @@ trait OZEffectSetup:
 
 object OZEffectSetup:
   def displayToOut(msg: String): ZIO[OZEffectSetup, Throwable, Unit] =
-    ZIO.serviceWith(_.displayToOut(msg))
+    ZIO.serviceWithZIO[OZEffectSetup](_.displayToOut(msg))
 
   def displayToErr(msg: String): ZIO[OZEffectSetup, Throwable, Unit] =
-    ZIO.serviceWith(_.displayToErr(msg))
+    ZIO.serviceWithZIO[OZEffectSetup](_.displayToErr(msg))
 
   def reportError(msg: String): ZIO[OZEffectSetup, Throwable, Unit] =
-    ZIO.serviceWith(_.reportError(msg))
+    ZIO.serviceWithZIO[OZEffectSetup](_.reportError(msg))
 
   def reportWarning(msg: String): ZIO[OZEffectSetup, Throwable, Unit] =
-    ZIO.serviceWith(_.reportWarning(msg))
+    ZIO.serviceWithZIO[OZEffectSetup](_.reportWarning(msg))
 
   def terminate(exitState: Either[String, Unit]): ZIO[OZEffectSetup, Throwable, Unit] =
-    ZIO.serviceWith(_.terminate(exitState))
+    ZIO.serviceWithZIO[OZEffectSetup](_.terminate(exitState))
 
   def runOEffects(effects: List[OEffect]): ZIO[OZEffectSetup, Throwable, Unit] =
     ZIO

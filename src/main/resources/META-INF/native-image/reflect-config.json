@@ -1031,10 +1031,16 @@
     ]
   },
   {
-    "name": "java.io.FilePermission"
+    "name": "izumi.reflect.macrortti.LightTypeTagInheritance",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
   },
   {
-    "name": "java.lang.Object[]"
+    "name": "java.io.FilePermission"
   },
   {
     "name": "java.lang.RuntimePermission"
@@ -1521,15 +1527,6 @@
     ]
   },
   {
-    "name": "sun.security.provider.MD5",
-    "methods": [
-      {
-        "name": "<init>",
-        "parameterTypes": []
-      }
-    ]
-  },
-  {
     "name": "sun.security.provider.NativePRNG",
     "methods": [
       {
@@ -1824,15 +1821,6 @@
     ]
   },
   {
-    "name": "zio.PlatformSpecific$ZEnv$",
-    "fields": [
-      {
-        "name": "0bitmap$1",
-        "allowUnsafeAccess": true
-      }
-    ]
-  },
-  {
     "name": "zio.Runtime$",
     "fields": [
       {
@@ -1851,7 +1839,7 @@
     ]
   },
   {
-    "name": "zio.Schedule$$anon$27",
+    "name": "zio.ZEnvironment$",
     "fields": [
       {
         "name": "0bitmap$1",
@@ -1887,16 +1875,16 @@
     ]
   },
   {
-    "name": "zio.ZLayer",
+    "name": "zio.ZIOMetric$Histogram",
     "fields": [
       {
-        "name": "0bitmap$1",
+        "name": "0bitmap$6",
         "allowUnsafeAccess": true
       }
     ]
   },
   {
-    "name": "zio.ZManaged",
+    "name": "zio.ZLayer",
     "fields": [
       {
         "name": "0bitmap$1",
@@ -1908,13 +1896,22 @@
     "name": "zio.ZManaged$",
     "fields": [
       {
-        "name": "0bitmap$2",
+        "name": "0bitmap$1",
         "allowUnsafeAccess": true
       }
     ]
   },
   {
-    "name": "zio.internal.FiberContext",
+    "name": "zio.ZTrace$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.internal.FiberContext$",
     "fields": [
       {
         "name": "0bitmap$1",
@@ -1941,15 +1938,6 @@
     ]
   },
   {
-    "name": "zio.internal.stacktracer.Tracer$",
-    "fields": [
-      {
-        "name": "0bitmap$1",
-        "allowUnsafeAccess": true
-      }
-    ]
-  },
-  {
     "name": "zio.package$",
     "fields": [
       {
@@ -1960,15 +1948,6 @@
   },
   {
     "name": "zio.stm.ZSTM$",
-    "fields": [
-      {
-        "name": "0bitmap$1",
-        "allowUnsafeAccess": true
-      }
-    ]
-  },
-  {
-    "name": "zio.stream.ZStream$",
     "fields": [
       {
         "name": "0bitmap$1",

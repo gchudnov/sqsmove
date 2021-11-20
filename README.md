@@ -52,6 +52,9 @@ Examples:
   - Download N messages to directory D:
     sqsmove -s A --dst-dir D -c N
 
+  - Download N messages to directory D without deletion:
+    sqsmove -s A --dst-dir D -c N --no-delete
+
   - Upload messages from directory D:
     sqsmove --src-dir D -d B
 ```

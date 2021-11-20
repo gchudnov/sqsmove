@@ -1,19 +1,17 @@
 package com.github.gchudnov.sqsmove
 
 import com.github.gchudnov.sqsmove.sqs.BasicSqs.{ monitor, summary }
-import com.github.gchudnov.sqsmove.sqs.{ AutoSqs, ParallelSqs, SerialSqs, Sqs }
 import com.github.gchudnov.sqsmove.sqs.Sqs.*
+import com.github.gchudnov.sqsmove.sqs.{ AutoSqs, ParallelSqs, SerialSqs, Sqs }
+import com.github.gchudnov.sqsmove.util.DurationOps
 import com.github.gchudnov.sqsmove.zopt.SuccessExitException
 import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.{ OZEffectSetup, StdioEffectSetup }
-import com.github.gchudnov.sqsmove.util.DurationOps
 import scopt.{ DefaultOParserSetup, OParserSetup }
 import zio.*
-import zio.Clock
 import zio.Console.*
-import java.io.File
-import java.lang.RuntimeException
 
-import java.lang.System as JSystem
+import java.io.File
+import java.lang.{ RuntimeException, System as JSystem }
 
 object SqsMove extends ZIOAppDefault:
 
@@ -33,6 +31,7 @@ object SqsMove extends ZIOAppDefault:
 
     program.catchSome { case _: SuccessExitException => ZIO.unit }
       .tapError(t => printLineError(s"Error: ${t.getMessage}"))
+      .catchAll(_ => ZIO.unit)
 
   private def makeProgram(cfg: SqsConfig): ZIO[Sqs with Clock with Console, Throwable, Unit] =
     (cfg.source, cfg.destination) match
@@ -100,7 +99,8 @@ object SqsMove extends ZIOAppDefault:
                  |[${paramsMsg}]
                  |Are you sure? (y|N)""".stripMargin
     for
-      _   <- printLine(msg)
-      ans <- readLine
-      _   <- ZIO.cond(ans == "y", (), new RuntimeException("Aborted"))
+      console <- ZIO.service[Console]
+      _       <- console.printLine(msg)
+      ans     <- console.readLine
+      _       <- ZIO.cond(ans == "y", (), new RuntimeException("Aborted"))
     yield ()

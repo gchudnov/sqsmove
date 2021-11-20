@@ -14,10 +14,10 @@ object Sqs:
     ZIO.serviceWithZIO[Sqs](_.getQueueUrl(name))
 
   def move(srcQueueUrl: String, dstQueueUrl: String): RIO[Sqs, Unit] =
-    ZIO.serviceWith(_.move(srcQueueUrl, dstQueueUrl))
+    ZIO.serviceWithZIO[Sqs](_.move(srcQueueUrl, dstQueueUrl))
 
   def download(srcQueueUrl: String, dstDir: File): RIO[Sqs, Unit] =
-    ZIO.serviceWith(_.download(srcQueueUrl, dstDir))
+    ZIO.serviceWithZIO[Sqs](_.download(srcQueueUrl, dstDir))
 
   def upload(srcDir: File, dstQueueUrl: String): RIO[Sqs, Unit] =
-    ZIO.serviceWith(_.upload(srcDir, dstQueueUrl))
+    ZIO.serviceWithZIO[Sqs](_.upload(srcDir, dstQueueUrl))
