@@ -4,7 +4,6 @@ object Dependencies {
 
   object versions {
     val awsSdk        = "2.17.86"
-    val kindProjector = "0.10.3"
     val logback       = "1.2.7"
     val scopt         = "4.0.1"
     val zio           = "2.0.0-M6-2"
