@@ -11,6 +11,7 @@ import java.io.File
  * Serial SQS Move
  */
 final class SerialSqs(maxConcurrency: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean) extends BasicSqs(maxConcurrency):
+  import BasicSqs.*
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     for
@@ -39,17 +40,22 @@ final class SerialSqs(maxConcurrency: Int, limit: Option[Int], visibilityTimeout
     yield ()
 
   override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
-    ZIO
-      .fromEither(BasicSqs.listFilesWithoutMetadata(srcDir))
-      .map(_.grouped(AwsSqs.maxBatchSize).take(limit.fold(Int.MaxValue)(identity)).toList)
-      .flatMap(chunkedFiles =>
-        ZIO.foreach(chunkedFiles)(chunk =>
-          ZIO
-            .foreach(chunk)(messageFromFile)
-            .flatMap(b => sendBatch(dstQueueUrl, b.toIndexedSeq).as(b.size) @@ countMessages)
-        )
-      )
-      .unit
+    for
+      files       <- ZIO.fromEither(BasicSqs.listFilesWithoutMetadata(srcDir))
+      limitedFiles = files.take(limit.fold(Int.MaxValue)(identity))
+      filteredFiles <- ZIO.collect(limitedFiles)(f =>
+                         isFileNonEmpty(f).asSomeError.flatMap {
+                           case true  => ZIO.succeed(f)
+                           case false => ZIO.fail(None)
+                         }
+                       )
+      chunkedFiles = filteredFiles.grouped(AwsSqs.maxBatchSize).toList
+      _ <- ZIO.foreachDiscard(chunkedFiles) { chunk =>
+             ZIO
+               .foreach(chunk)(messageFromFile)
+               .flatMap(b => sendBatch(dstQueueUrl, b.toIndexedSeq).as(b.size) @@ countMessages)
+           }
+    yield ()
 
 object SerialSqs:
   def layer(maxConcurrency: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Any, Throwable, Sqs] =

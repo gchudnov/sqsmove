@@ -1,6 +1,7 @@
 package com.github.gchudnov.sqsmove.sqs
 
 import com.github.gchudnov.sqsmove.sqs.AwsSqs.makeReceiveRequest
+import com.github.gchudnov.sqsmove.util.FileOps
 import software.amazon.awssdk.services.sqs.model.Message
 import zio.*
 import zio.stream.{ ZPipeline, ZStream }
@@ -43,14 +44,15 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int, limit: Option[Int
     ZStream
       .fromIterableZIO(ZIO.fromEither(BasicSqs.listFilesWithoutMetadata(srcDir)))
       .via(withOptionalLimit)
+      .filterZIO(isFileNonEmpty)
       .grouped(AwsSqs.maxBatchSize)
       .filter(_.nonEmpty)
       .mapZIOPar(parallelism)(b => ZIO.foreach(b)(messageFromFile).flatMap(b => sendBatch(dstQueueUrl, b).as(b.size) @@ countMessages))
       .runDrain
       .provide(ZLayer.succeed(clock))
 
-  private def withOptionalLimit =
-    limit.map(n => ZPipeline.take(n)).getOrElse(ZPipeline.identity)
+  private def withOptionalLimit[In]: ZPipeline[Any, Nothing, In, In] =
+    limit.map(n => ZPipeline.take[In](n.toLong)).getOrElse(ZPipeline.identity[In])
 
 object ParallelSqs:
 

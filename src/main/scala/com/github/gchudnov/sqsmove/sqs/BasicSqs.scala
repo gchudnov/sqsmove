@@ -3,7 +3,7 @@ package com.github.gchudnov.sqsmove.sqs
 import com.github.gchudnov.sqsmove.util.{ ArrayOps, CsvOps, DirOps, FileOps }
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
-import software.amazon.awssdk.services.sqs.model.{ GetQueueUrlRequest, Message, MessageAttributeValue, ReceiveMessageRequest }
+import software.amazon.awssdk.services.sqs.model.*
 import zio.*
 import zio.Console.*
 
@@ -48,7 +48,7 @@ abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
         val ids = ss.flatMap(e => m.get(e.id())).toIndexedSeq
 
         ZIO
-          .when(fs.nonEmpty)(ZIO.logWarning(s"Failed to send ${fs.size} entries"))
+          .when(fs.nonEmpty)(ZIO.logWarning(s"Failed to send ${fs.size} entries: ${errorsToString(fs)}"))
           .as(ids)
       }
 
@@ -61,7 +61,7 @@ abstract class BasicSqs(maxConcurrency: Int) extends Sqs:
         val ss = resp.successful().asScala
 
         ZIO
-          .when(fs.nonEmpty)(ZIO.logWarning(s"Failed to delete ${fs.size} entries"))
+          .when(fs.nonEmpty)(ZIO.logWarning(s"Failed to delete ${fs.size} entries: ${errorsToString(fs)}"))
           .as(ss.length)
       }
 
@@ -176,6 +176,12 @@ object BasicSqs:
       m            <- ZIO.fromEither(BasicSqs.toMessage(data, meta))
     yield m
 
+  private[sqs] def isFileNonEmpty(file: File): ZIO[Any, Throwable, Boolean] =
+    for
+      flag <- ZIO.fromEither(FileOps.isFileEmpty(file))
+      _    <- ZIO.when(flag)(ZIO.logWarning(s"File ${file} is empty: skipping"))
+    yield !flag
+
   /**
    * Read both data and metadata for the given file
    */
@@ -195,3 +201,6 @@ object BasicSqs:
       attrs     <- attrsFromTable(metaTable)
       m         <- allCatch.either(Message.builder.messageAttributes(attrs.asJava).body(data).build())
     yield m
+
+  private[sqs] def errorsToString(fs: Iterable[BatchResultErrorEntry]): String =
+    fs.map(_.toString).mkString(";")

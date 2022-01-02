@@ -29,3 +29,10 @@ object FileOps:
       else originalFileName
     val filename = s"${baseName}.${newExt}"
     new File(file.getParentFile, filename)
+
+  def fileSize(file: File): Either[Throwable, Long] =
+    allCatch.either(file.length())
+
+  def isFileEmpty(file: File): Either[Throwable, Boolean] =
+    for sz <- allCatch.either(file.length())
+    yield (sz == 0)

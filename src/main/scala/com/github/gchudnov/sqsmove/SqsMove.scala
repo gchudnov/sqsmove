@@ -31,7 +31,7 @@ object SqsMove extends ZIOAppDefault:
 
     program.catchSome { case _: SuccessExitException => ZIO.unit }
       .tapError(t => printLineError(s"Error: ${t.getMessage}"))
-      .catchAll(_ => ZIO.unit)
+      .ignore
 
   private def makeProgram(cfg: SqsConfig): ZIO[Sqs with Clock with Console, Throwable, Unit] =
     (cfg.source, cfg.destination) match

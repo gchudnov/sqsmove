@@ -34,8 +34,8 @@ final class AutoSqs(maxConcurrency: Int, initParallelism: Int, limit: Option[Int
       pRef <- ZRef.make(initParallelism)
       dRef <- ZRef.make(initParallelism)
 
-      messages <- ZQueue.bounded[Message](autoQueueMaxSize)      // input messages to move
-      handles <- ZQueue.bounded[ReceiptHandle](autoQueueMaxSize) // message handles to delete when a message was copied
+      messages <- ZQueue.bounded[Message](autoQueueMaxSize)       // input messages to move
+      handles  <- ZQueue.bounded[ReceiptHandle](autoQueueMaxSize) // message handles to delete when a message was copied
 
       csRef <- ZRef.make(List.empty[StopPromise]) // active consumers
       psRef <- ZRef.make(List.empty[StopPromise]) // active producers
