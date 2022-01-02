@@ -18,11 +18,11 @@ object DirOps:
     }
 
   def listFilesBy(dir: File, predicate: (File) => Boolean): Either[Throwable, List[File]] =
-    allCatch.either {
-      dir.listFiles
-        .filter(it => it.isFile && predicate(it))
-        .toList
-    }
+    for
+      _       <- Either.cond(dir.isDirectory, dir, new RuntimeException(s"${dir} is not a directory"))
+      files   <- allCatch.either(dir.listFiles).flatMap(Option(_).toRight(new RuntimeException(s"${dir} does not denote a directory")))
+      filtered = files.filter(it => it.isFile && predicate(it)).toList
+    yield filtered
 
   def listFilesByExtension(dir: File, extensions: List[String]): Either[Throwable, List[File]] =
     listFilesBy(dir, file => extensions.exists(file.getName.endsWith(_)))
