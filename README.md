@@ -17,7 +17,7 @@ $ sqsmove --help
 ```
 
 ```text
-sqsmove 1.2.2
+sqsmove 1.2.4
 Usage: sqsmove [options]
 
   -s, --src-queue <name>   source queue name
