@@ -6,6 +6,7 @@
     "dhms",
     "OEFFECT",
     "preprocess",
+    "semanticdb",
     "sqsmove"
   ]
 }
