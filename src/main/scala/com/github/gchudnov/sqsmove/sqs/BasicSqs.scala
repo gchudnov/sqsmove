@@ -89,13 +89,13 @@ object BasicSqs:
 
   private val monitorDuration = 1.second
 
-  def summary(): ZIO[Console with Clock, IOException, Unit] =
+  def summary(): ZIO[Any, IOException, Unit] =
     for
       cCount <- countMessages.value.map(_.count)
       _      <- Clock.currentDateTime.flatMap(dt => printLine(s"[$dt] SQS messages processed: ${cCount.toInt}"))
     yield ()
 
-  def monitor(): ZIO[Console with Clock, Nothing, Fiber.Runtime[IOException, Long]] =
+  def monitor(): ZIO[Any, Nothing, Fiber.Runtime[IOException, Long]] =
     val schedulePolicy = Schedule.spaced(monitorDuration)
 
     val iteration = (mRef: Ref[Double]) =>

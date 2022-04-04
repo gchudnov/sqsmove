@@ -217,7 +217,7 @@ object SqsConfig:
         case (_, _) =>
           ""
       displayToOut(value) *> ZIO.fail(new SuccessExitException())
-    else ZIO(effects.filterNot(it => it.isInstanceOf[ReportError] && it.asInstanceOf[ReportError].msg.startsWith(OEffectPrefix)))
+    else ZIO.attempt(effects.filterNot(it => it.isInstanceOf[ReportError] && it.asInstanceOf[ReportError].msg.startsWith(OEffectPrefix)))
 
   private def hasKey(key: String)(effects: List[OEffect]): Boolean =
     effects.exists {

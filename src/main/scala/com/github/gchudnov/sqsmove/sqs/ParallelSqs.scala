@@ -11,7 +11,7 @@ import java.io.File
 /**
  * Parallel SQS Move
  */
-final class ParallelSqs(maxConcurrency: Int, parallelism: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean, clock: Clock) extends BasicSqs(maxConcurrency):
+final class ParallelSqs(maxConcurrency: Int, parallelism: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean) extends BasicSqs(maxConcurrency):
   import BasicSqs.*
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
@@ -25,7 +25,6 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int, limit: Option[Int
       .mapZIOPar(parallelism)(b => sendBatch(dstQueueUrl, b))
       .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).unit)
       .runDrain
-      .provide(ZLayer.succeed(clock))
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] =
     ZStream
@@ -38,7 +37,6 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int, limit: Option[Int
       .mapZIOPar(parallelism)(b => saveBatch(dstDir, b))
       .mapZIOPar(parallelism)(b => (deleteBatch(srcQueueUrl, b).when(isDelete).as(b.size) @@ countMessages).unit)
       .runDrain
-      .provide(ZLayer.succeed(clock))
 
   override def upload(srcDir: File, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     ZStream
@@ -49,16 +47,21 @@ final class ParallelSqs(maxConcurrency: Int, parallelism: Int, limit: Option[Int
       .filter(_.nonEmpty)
       .mapZIOPar(parallelism)(b => ZIO.foreach(b)(messageFromFile).flatMap(b => sendBatch(dstQueueUrl, b).as(b.size) @@ countMessages))
       .runDrain
-      .provide(ZLayer.succeed(clock))
 
   private def withOptionalLimit[In]: ZPipeline[Any, Nothing, In, In] =
     limit.map(n => ZPipeline.take[In](n.toLong)).getOrElse(ZPipeline.identity[In])
 
 object ParallelSqs:
 
-  def layer(maxConcurrency: Int, parallelism: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Clock, Throwable, Sqs] = (for
-    clock  <- ZIO.service[Clock]
-    service = new ParallelSqs(maxConcurrency = maxConcurrency, parallelism = parallelism, limit = limit, visibilityTimeout = visibilityTimeout, isDelete = isDelete, clock = clock)
-  yield service).toLayer
+  def layer(maxConcurrency: Int, parallelism: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Any, Nothing, Sqs] =
+    ZLayer.succeed(
+      new ParallelSqs(
+        maxConcurrency = maxConcurrency,
+        parallelism = parallelism,
+        limit = limit,
+        visibilityTimeout = visibilityTimeout,
+        isDelete = isDelete
+      )
+    )
 
   val waitBatch: Duration = Duration.fromMillis(AwsSqs.waitBatchMillis)

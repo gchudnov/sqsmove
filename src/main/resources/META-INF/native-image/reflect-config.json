@@ -982,8 +982,41 @@
     ]
   },
   {
+    "name": "io.netty.internal.tcnative.CertificateCallback"
+  },
+  {
+    "name": "io.netty.internal.tcnative.CertificateCallbackTask"
+  },
+  {
+    "name": "io.netty.internal.tcnative.SSLContext"
+  },
+  {
+    "name": "io.netty.internal.tcnative.SSLPrivateKeyMethodDecryptTask"
+  },
+  {
+    "name": "io.netty.internal.tcnative.SSLPrivateKeyMethodSignTask"
+  },
+  {
+    "name": "io.netty.internal.tcnative.SSLPrivateKeyMethodTask"
+  },
+  {
+    "name": "io.netty.internal.tcnative.SSLTask"
+  },
+  {
     "name": "io.netty.util.ReferenceCountUtil",
     "allDeclaredMethods": true
+  },
+  {
+    "name": "io.netty.util.internal.NativeLibraryUtil",
+    "methods": [
+      {
+        "name": "loadLibrary",
+        "parameterTypes": [
+          "java.lang.String",
+          "boolean"
+        ]
+      }
+    ]
   },
   {
     "name": "io.netty.util.internal.shaded.org.jctools.queues.BaseMpscLinkedArrayQueueColdProducerFields",
@@ -1040,7 +1073,28 @@
     ]
   },
   {
+    "name": "izumi.reflect.macrortti.LightTypeTagRef$NameReference",
+    "fields": [
+      {
+        "name": "0bitmap$5",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
     "name": "java.io.FilePermission"
+  },
+  {
+    "name": "java.lang.Exception"
+  },
+  {
+    "name": "java.lang.IllegalArgumentException"
+  },
+  {
+    "name": "java.lang.NullPointerException"
+  },
+  {
+    "name": "java.lang.OutOfMemoryError"
   },
   {
     "name": "java.lang.RuntimePermission"
@@ -1821,7 +1875,7 @@
     ]
   },
   {
-    "name": "zio.Runtime$",
+    "name": "zio.FiberRef$",
     "fields": [
       {
         "name": "0bitmap$1",
@@ -1830,7 +1884,43 @@
     ]
   },
   {
+    "name": "zio.Runtime$",
+    "fields": [
+      {
+        "name": "0bitmap$2",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
     "name": "zio.RuntimeConfig$",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.Schedule$$anon$27",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.Supervisor$$anon$1",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.System$",
     "fields": [
       {
         "name": "0bitmap$1",
@@ -1848,15 +1938,6 @@
     ]
   },
   {
-    "name": "zio.ZFiberRef$",
-    "fields": [
-      {
-        "name": "0bitmap$1",
-        "allowUnsafeAccess": true
-      }
-    ]
-  },
-  {
     "name": "zio.ZIO$",
     "fields": [
       {
@@ -1866,34 +1947,7 @@
     ]
   },
   {
-    "name": "zio.ZIOMetric$Counter",
-    "fields": [
-      {
-        "name": "0bitmap$2",
-        "allowUnsafeAccess": true
-      }
-    ]
-  },
-  {
-    "name": "zio.ZIOMetric$Histogram",
-    "fields": [
-      {
-        "name": "0bitmap$6",
-        "allowUnsafeAccess": true
-      }
-    ]
-  },
-  {
     "name": "zio.ZLayer",
-    "fields": [
-      {
-        "name": "0bitmap$1",
-        "allowUnsafeAccess": true
-      }
-    ]
-  },
-  {
-    "name": "zio.ZManaged$",
     "fields": [
       {
         "name": "0bitmap$1",
@@ -1929,6 +1983,15 @@
     ]
   },
   {
+    "name": "zio.internal.metrics.ConcurrentMetricHooksPlatformSpecific",
+    "fields": [
+      {
+        "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
     "name": "zio.internal.metrics.package$",
     "fields": [
       {
@@ -1951,6 +2014,15 @@
     "fields": [
       {
         "name": "0bitmap$1",
+        "allowUnsafeAccess": true
+      }
+    ]
+  },
+  {
+    "name": "zio.stream.ZStream$",
+    "fields": [
+      {
+        "name": "0bitmap$2",
         "allowUnsafeAccess": true
       }
     ]

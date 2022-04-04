@@ -58,5 +58,12 @@ final class SerialSqs(maxConcurrency: Int, limit: Option[Int], visibilityTimeout
     yield ()
 
 object SerialSqs:
-  def layer(maxConcurrency: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Any, Throwable, Sqs] =
-    ZIO.attempt(new SerialSqs(maxConcurrency = maxConcurrency, limit = limit, visibilityTimeout = visibilityTimeout, isDelete = isDelete)).toLayer
+  def layer(maxConcurrency: Int, limit: Option[Int], visibilityTimeout: Duration, isDelete: Boolean): ZLayer[Any, Nothing, Sqs] =
+    ZLayer.succeed(
+      new SerialSqs(
+        maxConcurrency = maxConcurrency,
+        limit = limit,
+        visibilityTimeout = visibilityTimeout,
+        isDelete = isDelete
+      )
+    )
