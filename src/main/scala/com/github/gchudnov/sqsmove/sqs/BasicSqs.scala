@@ -6,6 +6,7 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model.*
 import zio.*
 import zio.Console.*
+import zio.metrics.*
 
 import java.io.{ File, IOException }
 import java.nio.file.Paths
@@ -83,14 +84,14 @@ object BasicSqs:
 
   val extMeta = "meta"
 
-  val metricCounterName: String             = "countMessages"
-  val countMessages: ZIOMetric.Counter[Int] = ZIOMetric.countValueWith[Int](metricCounterName)(_.toDouble)
+  val metricCounterName: String          = "countMessages"
+  val countMessages: Metric.Counter[Int] = Metric.counterInt(metricCounterName)
 
   private val monitorDuration = 1.second
 
   def summary(): ZIO[Console with Clock, IOException, Unit] =
     for
-      cCount <- countMessages.count
+      cCount <- countMessages.value.map(_.count)
       _      <- Clock.currentDateTime.flatMap(dt => printLine(s"[$dt] SQS messages processed: ${cCount.toInt}"))
     yield ()
 
@@ -99,14 +100,14 @@ object BasicSqs:
 
     val iteration = (mRef: Ref[Double]) =>
       for
-        cCount <- countMessages.count
+        cCount <- countMessages.value.map(_.count)
         pCount <- mRef.getAndSet(cCount)
         dMsg    = cCount - pCount
         _      <- Clock.currentDateTime.flatMap(dt => printLine(s"[$dt] SQS messages processed: ${cCount.toInt} (+${dMsg.toInt})").when(dMsg > 0))
       yield ()
 
     for
-      mRef <- ZRef.make(0.0)
+      mRef <- Ref.make(0.0)
       f    <- iteration(mRef).repeat(schedulePolicy).fork
     yield f
 
@@ -172,8 +173,9 @@ object BasicSqs:
    */
   private[sqs] def messageFromFile(file: File): ZIO[Any, Throwable, Message] =
     for
-      (data, meta) <- readDataWithMetadata(file)
-      m            <- ZIO.fromEither(BasicSqs.toMessage(data, meta))
+      dm          <- readDataWithMetadata(file)
+      (data, meta) = dm
+      m           <- ZIO.fromEither(BasicSqs.toMessage(data, meta))
     yield m
 
   private[sqs] def isFileNonEmpty(file: File): ZIO[Any, Throwable, Boolean] =

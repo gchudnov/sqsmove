@@ -30,16 +30,16 @@ final class AutoSqs(maxConcurrency: Int, initParallelism: Int, limit: Option[Int
     val dName = "auto-deleter"
 
     val res = for
-      cRef <- ZRef.make(initParallelism)
-      pRef <- ZRef.make(initParallelism)
-      dRef <- ZRef.make(initParallelism)
+      cRef <- Ref.make(initParallelism)
+      pRef <- Ref.make(initParallelism)
+      dRef <- Ref.make(initParallelism)
 
-      messages <- ZQueue.bounded[Message](autoQueueMaxSize)       // input messages to move
-      handles  <- ZQueue.bounded[ReceiptHandle](autoQueueMaxSize) // message handles to delete when a message was copied
+      messages <- Queue.bounded[Message](autoQueueMaxSize)       // input messages to move
+      handles  <- Queue.bounded[ReceiptHandle](autoQueueMaxSize) // message handles to delete when a message was copied
 
-      csRef <- ZRef.make(List.empty[StopPromise]) // active consumers
-      psRef <- ZRef.make(List.empty[StopPromise]) // active producers
-      dsRef <- ZRef.make(List.empty[StopPromise]) // active deleters
+      csRef <- Ref.make(List.empty[StopPromise]) // active consumers
+      psRef <- Ref.make(List.empty[StopPromise]) // active producers
+      dsRef <- Ref.make(List.empty[StopPromise]) // active deleters
 
       f0 <-
         scaleWorkers(cName, cRef, csRef)(

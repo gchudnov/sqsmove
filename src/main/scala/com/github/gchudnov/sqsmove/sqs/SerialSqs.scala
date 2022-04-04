@@ -15,7 +15,7 @@ final class SerialSqs(maxConcurrency: Int, limit: Option[Int], visibilityTimeout
 
   override def move(srcQueueUrl: String, dstQueueUrl: String): ZIO[Any, Throwable, Unit] =
     for
-      nRef <- ZRef.make(limit.getOrElse(Int.MaxValue))
+      nRef <- Ref.make(limit.getOrElse(Int.MaxValue))
       _ <- (for
              n <- nRef.get
              sz = math.min(AwsSqs.maxBatchSize, n)
@@ -28,7 +28,7 @@ final class SerialSqs(maxConcurrency: Int, limit: Option[Int], visibilityTimeout
 
   override def download(srcQueueUrl: String, dstDir: File): ZIO[Any, Throwable, Unit] =
     for
-      nRef <- ZRef.make(limit.getOrElse(Int.MaxValue))
+      nRef <- Ref.make(limit.getOrElse(Int.MaxValue))
       _ <- (for
              n <- nRef.get
              sz = math.min(AwsSqs.maxBatchSize, n)
