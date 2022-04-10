@@ -4,7 +4,7 @@ import com.github.gchudnov.sqsmove.zopt.{ FailureExitException, SuccessExitExcep
 import zio.*
 import zio.Console.*
 
-class StdioEffectSetup() extends OZEffectSetup:
+final class StdioEffectSetup() extends OZEffectSetup:
 
   override def displayToOut(msg: String): Task[Unit] =
     printLine(msg)
