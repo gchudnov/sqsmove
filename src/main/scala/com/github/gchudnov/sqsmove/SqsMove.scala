@@ -4,8 +4,8 @@ import com.github.gchudnov.sqsmove.sqs.BasicSqs.{ monitor, summary }
 import com.github.gchudnov.sqsmove.sqs.Sqs.*
 import com.github.gchudnov.sqsmove.sqs.{ AutoSqs, ParallelSqs, SerialSqs, Sqs }
 import com.github.gchudnov.sqsmove.util.DurationOps
-import com.github.gchudnov.sqsmove.zopt.SuccessExitException
 import com.github.gchudnov.sqsmove.zopt.ozeffectsetup.{ OZEffectSetup, StdioEffectSetup }
+import com.github.gchudnov.sqsmove.zopt.{ SuccessExitException, ZOpt }
 import scopt.{ DefaultOParserSetup, OParserSetup }
 import zio.*
 import zio.Console.*
@@ -18,15 +18,15 @@ object SqsMove extends ZIOAppDefault:
   private val sqsMaxConcurrency: Int = 1024
 
   override def run: ZIO[ZIOAppArgs, Any, Any] =
-    val osetup: ZLayer[Any, Throwable, OZEffectSetup] = makeOZEffectSetup()
-    val psetup: OParserSetup                          = makePEffectSetup()
+    val osetup               = ZOpt.makeOZEffectSetup()
+    val psetup: OParserSetup = ZOpt.makePEffectSetup()
 
     val program = for
-      as  <- getArgs
-      cfg <- SqsConfig.fromArgs(as.toList)(psetup).provideLayer(osetup)
-      env  = makeEnv(cfg)
-      _   <- ask(cfg).when(cfg.isAsk)
-      _   <- makeProgram(cfg).provideLayer(env)
+      args <- getArgs
+      cfg  <- SqsConfig.fromArgs(args.toList)(psetup).provideLayer(osetup)
+      env   = makeEnv(cfg)
+      _    <- ask(cfg).when(cfg.isAsk)
+      _    <- makeProgram(cfg).provideLayer(env)
     yield ()
 
     program.catchSome { case _: SuccessExitException => ZIO.unit }
@@ -64,14 +64,6 @@ object SqsMove extends ZIOAppDefault:
       _           <- upload(srcDir, dstQueueUrl)
       _           <- summary()
     yield ()
-
-  private def makeOZEffectSetup(): ZLayer[Any, Nothing, OZEffectSetup] =
-    StdioEffectSetup.layer
-
-  private def makePEffectSetup(): OParserSetup =
-    new DefaultOParserSetup with OParserSetup:
-      override def errorOnUnknownArgument: Boolean   = false
-      override def showUsageOnError: Option[Boolean] = Some(false)
 
   private def makeEnv(cfg: SqsConfig): ZLayer[Any, Throwable, Sqs] =
     val copyEnv = cfg.parallelism match
