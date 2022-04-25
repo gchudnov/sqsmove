@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   object versions {
-    val awsSdk        = "2.17.171"
+    val awsSdk        = "2.17.176"
     val logback       = "1.2.11"
     val scopt         = "4.0.1"
     val zio           = "2.0.0-RC5"
