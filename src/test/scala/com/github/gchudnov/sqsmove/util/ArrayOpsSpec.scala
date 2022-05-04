@@ -6,7 +6,7 @@ import zio.*
 import com.github.gchudnov.sqsmove.util.ArrayOps.*
 
 object ArrayOpsSpec extends ZIOSpecDefault:
-  def spec: ZSpec[TestEnvironment with Scope, Any] =
+  def spec: Spec[TestEnvironment with Scope, Any] =
     suite("ArrayOps")(
       test("bytes can be encoded to base64") {
         val input    = "ABC"

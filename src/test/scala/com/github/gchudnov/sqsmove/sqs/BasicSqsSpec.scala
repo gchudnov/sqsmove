@@ -12,7 +12,7 @@ import com.github.gchudnov.sqsmove.util.FileOps.*
 import java.io.File
 
 object BasicSqsSpec extends ZIOSpecDefault:
-  override def spec: ZSpec[TestEnvironment with Scope, Any] =
+  override def spec: Spec[TestEnvironment with Scope, Any] =
     suite("BasicSqs")(
       test("attributes can be decoded") {
         val m = Map[String, MessageAttributeValue](

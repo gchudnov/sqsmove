@@ -7,7 +7,7 @@ import com.github.gchudnov.sqsmove.util.DurationOps.*
 import java.util.concurrent.TimeUnit
 
 object DurationOpsSpec extends ZIOSpecDefault:
-  def spec: ZSpec[TestEnvironment with Scope, Any] =
+  def spec: Spec[TestEnvironment with Scope, Any] =
     suite("DurationOps")(
       test("parse days") {
         val input         = "1d"

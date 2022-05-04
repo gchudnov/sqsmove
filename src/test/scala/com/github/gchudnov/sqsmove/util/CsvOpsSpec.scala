@@ -6,7 +6,7 @@ import zio.*
 import com.github.gchudnov.sqsmove.util.ArrayOps.*
 
 object CsvOpsSpec extends ZIOSpecDefault:
-  def spec: ZSpec[TestEnvironment with Scope, Any] =
+  def spec: Spec[TestEnvironment with Scope, Any] =
     suite("CsvOps")(
       test("Table can be serialized to a string as CSV") {
         val t = List(

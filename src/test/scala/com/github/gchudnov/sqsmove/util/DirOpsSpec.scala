@@ -8,7 +8,7 @@ import com.github.gchudnov.sqsmove.util.FileOps.*
 import java.io.File
 
 object DirOpsSpec extends ZIOSpecDefault:
-  def spec: ZSpec[TestEnvironment with Scope, Any] =
+  def spec: Spec[TestEnvironment with Scope, Any] =
     suite("DirOps")(
       test("files can be listed using a predicate") {
         val nf1 = "f1.txt"

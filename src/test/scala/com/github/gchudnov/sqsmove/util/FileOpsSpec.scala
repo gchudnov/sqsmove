@@ -8,7 +8,7 @@ import com.github.gchudnov.sqsmove.util.DirOps
 import java.io.File
 
 object FileOpsSpec extends ZIOSpecDefault:
-  def spec: ZSpec[TestEnvironment with Scope, Any] =
+  def spec: Spec[TestEnvironment with Scope, Any] =
     suite("FileOps")(
       test("file extension can be replaced if extension exists") {
         val newExt   = "meta"
