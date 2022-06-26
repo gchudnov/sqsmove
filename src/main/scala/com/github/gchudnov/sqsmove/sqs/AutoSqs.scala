@@ -93,7 +93,7 @@ final class AutoSqs(maxConcurrency: Int, initParallelism: Int, limit: Option[Int
              .mapZIO(b => runEffect(b))
              .tap(b => ZIO.logDebug(s"[$name] produce size: ${b.size}"))
              .mapZIO(b => outQueue.offerAll(b).unit)
-      s3 = s1.mergeTerminateEither(s2)
+      s3 = s1.mergeHaltEither(s2)
       f <- (s3.runDrain *> ZIO.logDebug(s"[$name] done")).fork
     yield f
 
@@ -132,7 +132,7 @@ final class AutoSqs(maxConcurrency: Int, initParallelism: Int, limit: Option[Int
              .filter(_.nonEmpty)
              .mapZIO(b => runEffect(b))
              .tap(n => ZIO.logDebug(s"[$name] delete size: $n"))
-      s3 = s1.mergeTerminateEither(s2)
+      s3 = s1.mergeHaltEither(s2)
       f <- (s3.runDrain *> ZIO.logDebug(s"[$name] done")).fork
     yield f
 
