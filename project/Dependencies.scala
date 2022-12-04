@@ -3,10 +3,10 @@ import sbt._
 object Dependencies {
 
   object versions {
-    val awsSdk        = "2.17.219"
-    val logback       = "1.2.11"
-    val scopt         = "4.0.1"
-    val zio           = "2.0.0"
+    val awsSdk        = "2.18.30"
+    val logback       = "1.4.5"
+    val scopt         = "4.1.0"
+    val zio           = "2.0.4"
     val scalaCsv      = "1.3.10"
   }
 

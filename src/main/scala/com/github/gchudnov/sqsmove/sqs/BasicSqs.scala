@@ -129,7 +129,7 @@ object BasicSqs:
   private[sqs] def attrsFromTable(t: List[List[String]]): Either[Throwable, Map[String, MessageAttributeValue]] =
     if t.isEmpty then Right[Throwable, Map[String, MessageAttributeValue]](Map.empty[String, MessageAttributeValue])
     else
-      val header :: tail = t
+      val (header, tail) = (t.head, t.tail)
       for
         attrNameIdx  <- findColumnIndex(header, attrName).toRight(columnNotFound(attrName))
         attrTypeIdx  <- findColumnIndex(header, attrType).toRight(columnNotFound(attrName))
