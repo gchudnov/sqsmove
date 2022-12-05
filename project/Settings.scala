@@ -1,7 +1,5 @@
 import sbt.Keys._
 import sbt._
-import sbtassembly.AssemblyKeys._
-import sbtassembly.MergeStrategy
 
 object Settings {
   private val scalaV = "3.2.1"
@@ -25,22 +23,7 @@ object Settings {
     "-language:postfixOps"           // Enable postfixOps
   )
 
-  type MergeStrategySelector = String => MergeStrategy
-
-  def defaultMergeStrategy(fallbackStrategy: MergeStrategySelector): MergeStrategySelector = {
-    case x if x.contains("module-info.class")            => MergeStrategy.discard
-    case x if x.contains("execution.interceptors")       => MergeStrategy.filterDistinctLines
-    case x if x.contains("io.netty.versions.properties") => MergeStrategy.filterDistinctLines
-    case x                                               => fallbackStrategy(x)
-  }
-
   val globalScalaVersion: String = scalaV
-
-  val assemblySettings: Seq[Setting[_]] = Seq(
-    assembly / test                  := {},
-    assembly / assemblyOutputPath    := new File("./target") / (assembly / assemblyJarName).value,
-    assembly / assemblyMergeStrategy := defaultMergeStrategy((assembly / assemblyMergeStrategy).value)
-  )
 
   val sharedResolvers: Vector[MavenRepository] = (Seq(Resolver.mavenLocal) ++ Resolver.sonatypeOssRepos("releases")).toVector
 

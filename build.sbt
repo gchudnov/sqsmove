@@ -1,6 +1,5 @@
 import sbt.Keys._
 import sbt._
-import sbtassembly.AssemblyPlugin.defaultUniversalScript
 
 Global / cancelable   := true
 Global / scalaVersion := Settings.globalScalaVersion
@@ -16,18 +15,14 @@ lazy val testSettings = Seq(
 lazy val allSettings = Settings.shared ++ testSettings
 
 lazy val sqsMove = (project in file("."))
-  .enablePlugins(BuildInfoPlugin)
+  .enablePlugins(BuildInfoPlugin, JavaAppPackaging, GraalVMNativeImagePlugin)
   .settings(allSettings)
-  .settings(Settings.assemblySettings)
   .settings(
     name := "sqsmove",
     libraryDependencies ++= Dependencies.sqsMove,
     buildInfoKeys                 := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage              := "com.github.gchudnov.sqsmove",
-    assembly / mainClass          := Some("com.github.gchudnov.sqsmove.SqsMove"),
-    assembly / assemblyOption     := (assembly / assemblyOption).value.withPrependShellScript(Some(defaultUniversalScript(shebang = false))),
-    assembly / assemblyOutputPath := new File(s"./target/${name.value}.jar"),
-    assembly / assemblyJarName    := s"${name.value}"
+    graalVMNativeImageOptions    ++= Seq("--no-fallback", "--verbose", "--enable-http", "--enable-https", "-H:+PrintClassInitialization", "-H:+AllowIncompleteClasspath", "-H:+ReportExceptionStackTraces") // NOTE: add --dry-run to investigate the build
   )
 
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")

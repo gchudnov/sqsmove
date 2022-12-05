@@ -1,9 +1,0 @@
-io.netty.handler.ssl.ReferenceCountedOpenSslContext
-io.netty.util.internal.logging.Log4JLogger
-io.netty.handler.ssl.JdkNpnApplicationProtocolNegotiator
-org.asynchttpclient
-io.netty.handler.ssl.JettyAlpnSslEngine$ClientEngine
-io.netty.handler.ssl.JettyAlpnSslEngine$ServerEngine
-io.netty.handler.ssl.ReferenceCountedOpenSslEngine
-io.netty.handler.ssl.ConscryptAlpnSslEngine
-io.netty.handler.ssl.JettyNpnSslEngine
