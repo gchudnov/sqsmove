@@ -2,7 +2,7 @@ import sbt.Keys._
 import sbt._
 
 object Settings {
-  private val scalaV = "3.2.1"
+  private val scalaV = "3.2.2"
 
   private val sharedScalacOptions = Seq(
     "-deprecation",                  // emit warning and location for usages of deprecated APIs

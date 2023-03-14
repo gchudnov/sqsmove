@@ -19,10 +19,18 @@ lazy val sqsMove = (project in file("."))
   .settings(allSettings)
   .settings(
     name := "sqsmove",
-    libraryDependencies ++= Dependencies.sqsMove,
-    buildInfoKeys                 := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
-    buildInfoPackage              := "com.github.gchudnov.sqsmove",
-    graalVMNativeImageOptions    ++= Seq("--no-fallback", "--verbose", "--enable-http", "--enable-https", "-H:+PrintClassInitialization", "-H:+AllowIncompleteClasspath", "-H:+ReportExceptionStackTraces") // NOTE: add --dry-run to investigate the build
+    libraryDependencies       ++= Dependencies.sqsMove,
+    buildInfoKeys              := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
+    buildInfoPackage           := "com.github.gchudnov.sqsmove",
+    graalVMNativeImageOptions ++= Seq(
+      "--no-fallback", 
+      "--verbose", 
+      "--enable-http", 
+      "--enable-https", 
+      "-H:+PrintClassInitialization", 
+      "-H:+AllowIncompleteClasspath", 
+      "-H:+ReportExceptionStackTraces"
+    ) // NOTE: add --dry-run to investigate the build
   )
 
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
